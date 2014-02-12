@@ -13,7 +13,7 @@ module Network.Wai.Predicate.Internal
 
 import Data.Attoparsec (eitherResult, feed, parse)
 import Data.ByteString (ByteString)
-import Data.ByteString.Readable
+import Data.ByteString.Read
 import Data.List (foldl')
 import Data.Predicate
 import Data.String (fromString)

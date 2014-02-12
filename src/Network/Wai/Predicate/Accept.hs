@@ -8,8 +8,7 @@
 {-# LANGUAGE TypeFamilies          #-}
 
 module Network.Wai.Predicate.Accept
-  ( Accept
-  , accept
+  ( Accept (..)
   , module Network.Wai.Predicate.MediaType
   )
 where
@@ -19,7 +18,6 @@ import Data.ByteString (ByteString)
 import Data.ByteString.Char8 (pack, unpack)
 import Data.Monoid hiding (All)
 import Data.Predicate
-import Data.Predicate.Descr
 import GHC.TypeLits
 import Data.Maybe
 import Network.HTTP.Types
@@ -31,10 +29,6 @@ import qualified Network.Wai.Predicate.Parser.MediaType as M
 
 -- | A 'Predicate' against the 'Request's \"Accept\" header.
 data Accept (t :: Symbol) (s :: Symbol) = Accept
-
-{-# INLINE accept #-}
-accept :: Accept t s
-accept = Accept
 
 type1 :: SingI t => Accept t s -> ByteString
 type1 m = withSing (f m)
@@ -62,9 +56,6 @@ instance (SingI t, SingI s) => Predicate (Accept t s) Request where
 
 instance (SingI t, SingI s) => Show (Accept t s) where
     show a = unpack $ "Accept: " <> type1 a <> "/" <> type2 a
-
-instance (SingI t, SingI s) => Description (Accept t s) where
-    describe a = DSymbol "Accept" (show $ type1 a <> "/" <> type2 a) Optional ["Header"]
 
 findMediaType :: (SingI t, SingI s) => Accept t s -> [M.MediaType] -> [Media t s]
 findMediaType a = mapMaybe (\m -> do

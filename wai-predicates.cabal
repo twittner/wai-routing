@@ -30,11 +30,8 @@ library
 
     exposed-modules:
         Data.Predicate
-        Data.Predicate.Descr
-        Data.Predicate.Typeof
         Network.Wai.Predicate
         Network.Wai.Predicate.Accept
-        Network.Wai.Predicate.Doc
         Network.Wai.Predicate.Error
         Network.Wai.Predicate.Param
         Network.Wai.Predicate.Query
@@ -42,7 +39,6 @@ library
         Network.Wai.Predicate.Content
         Network.Wai.Predicate.MediaType
         Network.Wai.Predicate.Tutorial
-        Network.Wai.Predicate.Types
         Network.Wai.Route
 
     other-modules:
@@ -52,20 +48,15 @@ library
         Network.Wai.Predicate.Request
 
     build-depends:
-        attoparsec           >= 0.10  && < 0.12
-      , base                 == 4.*
-      , bytestring           >= 0.9   && < 0.11
-      , bytestring-readable  == 0.1.*
-      , case-insensitive     == 1.0.*
-      , containers           >= 0.5
-      , http-types           == 0.8.*
-      , mtl                  >= 2.1
-      , wai                  == 2.0.*
-      , tagged               >= 0.7   && < 0.8
-      , text                 >= 0.11  && < 1.2
-      , transformers         == 0.3.*
-      , unordered-containers >= 0.2.3 && < 0.3
-      , wai-route            == 0.1.*
+        attoparsec       >= 0.10  && < 0.12
+      , base             == 4.*
+      , bytestring       >= 0.9   && < 0.11
+      , bytestring-read  == 0.2.*
+      , case-insensitive == 1.1.*
+      , http-types       == 0.8.*
+      , transformers     == 0.3.*
+      , wai              == 2.0.*
+      , wai-route        == 0.1.*
 
 test-suite wai-predicates-tests
     type:             exitcode-stdio-1.0
@@ -86,18 +77,14 @@ test-suite wai-predicates-tests
       , base                 == 4.*
       , blaze-builder        == 0.3.*
       , bytestring
-      , bytestring-readable
+      , bytestring-read
       , case-insensitive
-      , containers
       , http-types
       , HUnit                >= 1.2
-      , mtl
       , QuickCheck           >= 2.3
-      , tagged
       , tasty                >= 0.3
       , tasty-hunit          >= 0.2
       , tasty-quickcheck     >= 0.3
-      , text
       , transformers
       , wai
       , wai-route

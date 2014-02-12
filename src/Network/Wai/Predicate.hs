@@ -8,7 +8,6 @@ import Network.Wai.Predicate.Error   as M
 import Network.Wai.Predicate.Accept  as M
 import Network.Wai.Predicate.Capture as M
 import Network.Wai.Predicate.Content as M
-import Network.Wai.Predicate.Doc     as M
 import Network.Wai.Predicate.Header  as M
 import Network.Wai.Predicate.Param   as M
 import Network.Wai.Predicate.Request as M

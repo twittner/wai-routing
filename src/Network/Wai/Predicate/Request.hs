@@ -15,7 +15,7 @@ module Network.Wai.Predicate.Request
 
 import Data.ByteString (ByteString)
 import Data.CaseInsensitive (mk)
-import Data.Maybe (catMaybes)
+import Data.Maybe (mapMaybe)
 import Network.HTTP.Types
 
 import qualified Network.Wai as Wai
@@ -47,8 +47,7 @@ lookupCapture :: ByteString -> Request -> [ByteString]
 lookupCapture name = map snd . filter ((name ==) . fst) . captures
 
 lookupQuery :: ByteString -> Request -> [ByteString]
-lookupQuery name = catMaybes
-                 . map snd
+lookupQuery name = mapMaybe snd
                  . filter ((name ==) . fst)
                  . Wai.queryString
                  . request

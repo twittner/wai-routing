@@ -10,11 +10,9 @@
 
 module Network.Wai.Route
     ( Routes
-    , RouteDescr (..)
     , route
     , expandRoutes
     , showRoutes
-    , descriptions
     , renderErrorWith
 
     , addRoute
@@ -30,7 +28,7 @@ module Network.Wai.Route
 
 import Control.Applicative hiding (Const)
 import Control.Monad
-import Control.Monad.State.Strict hiding (get, put)
+import Control.Monad.Trans.State.Strict hiding (get, put)
 import Data.ByteString (ByteString)
 import Data.CaseInsensitive (mk)
 import Data.Either
@@ -39,7 +37,6 @@ import Data.List hiding (head, delete)
 import Data.Maybe (fromMaybe)
 import Data.Monoid
 import Data.Predicate
-import Data.Predicate.Descr
 import Network.HTTP.Types
 import Network.Wai (Response, Application, responseLBS, responseBuilder)
 import Network.Wai (rawPathInfo)
@@ -62,7 +59,7 @@ data Handler = Handler
     }
 
 data Pack where
-    Pack :: (Description p, Show p, Predicate p Request, FVal p ~ Error)
+    Pack :: (Show p, Predicate p Request, FVal p ~ Error)
          => p
          -> (TVal p -> IO Response)
          -> Pack
@@ -70,12 +67,6 @@ data Pack where
 -- | Function to turn an 'Error' value into a 'Lazy.ByteString'.
 -- Clients can provide their own renderer using 'renderErrorWith'.
 type Renderer = Error -> Maybe Lazy.ByteString
-
-data RouteDescr = RouteDescr
-    { routeMethod  :: !Method
-    , routePath    :: !ByteString
-    , routeDescr   :: !Descr
-    } deriving Show
 
 -- | The Routes monad state type.
 data St = St [Route] Renderer
@@ -101,7 +92,7 @@ instance Monad Routes where
 
 -- | Add a route for some 'Method' and path (potentially with variable
 -- captures), and constrained the some 'Predicate'.
-addRoute :: (Description p, Show p, Predicate p Request, FVal p ~ Error)
+addRoute :: (Show p, Predicate p Request, FVal p ~ Error)
          => Method
          -> ByteString               -- ^ path
          -> (TVal p -> IO Response)  -- ^ handler
@@ -112,7 +103,7 @@ addRoute m r x p = Routes . modify $ \(St !rr !f) ->
 
 -- | Specialisation of 'addRoute' for a specific HTTP 'Method'.
 get, head, post, put, delete, trace, options, connect ::
-    (Description p, Show p, Predicate p Request, FVal p ~ Error)
+    (Show p, Predicate p Request, FVal p ~ Error)
     => ByteString               -- ^ path
     -> (TVal p -> IO Response)  -- ^ handler
     -> p                        -- ^ 'Predicate'
@@ -140,14 +131,6 @@ showRoutes (Routes routes) =
                       . shows (_path x)
                       . (' ':)
                       . shows p $ ""
-
--- | Turn route definitions into corresponding descriptions, i.e.
--- 'RouteDescr' values which contain the description AST.
-descriptions :: Routes a -> [RouteDescr]
-descriptions (Routes routes) =
-    let St rr _ = execState routes zero
-    in flip map (concat (normalise rr)) $ \x ->
-        case _pred x of Pack p _ -> RouteDescr (_method x) (_path x) (describe p)
 
 -- | A WAI 'Application' which routes requests to handlers based on
 -- predicated route declarations.

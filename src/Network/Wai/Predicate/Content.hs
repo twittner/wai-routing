@@ -8,8 +8,7 @@
 {-# LANGUAGE TypeFamilies          #-}
 
 module Network.Wai.Predicate.Content
-    ( ContentType
-    , contentType
+    ( ContentType (..)
     , module Network.Wai.Predicate.MediaType
     ) where
 
@@ -18,7 +17,6 @@ import Data.ByteString (ByteString)
 import Data.ByteString.Char8 (pack, unpack)
 import Data.Monoid hiding (All)
 import Data.Predicate
-import Data.Predicate.Descr
 import GHC.TypeLits
 import Data.Maybe
 import Network.HTTP.Types.Status
@@ -30,10 +28,6 @@ import qualified Network.Wai.Predicate.Parser.MediaType as M
 
 -- | A 'Predicate' against the 'Request's \"Content-Type\" header.
 data ContentType (t :: Symbol) (s :: Symbol) = ContentType
-
-{-# INLINE contentType #-}
-contentType :: ContentType t s
-contentType = ContentType
 
 type1 :: SingI t => ContentType t s -> ByteString
 type1 m = withSing (f m)
@@ -59,9 +53,6 @@ instance (SingI t, SingI s) => Predicate (ContentType t s) Request where
 
 instance (SingI t, SingI s) => Show (ContentType t s) where
     show c = unpack $ "ContentType: " <> type1 c <> "/" <> type2 c
-
-instance (SingI t, SingI s) => Description (ContentType t s) where
-    describe a = DSymbol "Content-Type" (show $ type1 a <> "/" <> type2 a) Required ["Header"]
 
 findContentType :: (SingI t, SingI s) => ContentType t s -> [M.MediaType] -> [Media t s]
 findContentType c = mapMaybe (\m -> do

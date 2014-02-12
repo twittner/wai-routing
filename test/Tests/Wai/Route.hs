@@ -5,12 +5,12 @@
 module Tests.Wai.Route (tests) where
 
 import Data.ByteString (ByteString)
+import Data.ByteString.Read
 import Data.Predicate
 import Data.String
 import Network.HTTP.Types
 import Network.Wai
 import Network.Wai.Predicate hiding (Request)
-import Network.Wai.Predicate.Types
 import Network.Wai.Route
 import Test.HUnit hiding (Test)
 import Test.Tasty
@@ -42,22 +42,22 @@ testSitemap = do
 sitemap :: Routes ()
 sitemap = do
     get "/a" handlerA $
-        accept :&: (query "name" :|: query "nick") :&: query "foo"
+        Accept :&: (Query "name" :|: Query "nick") :&: Query "foo"
 
     get "/b" handlerB $
-        query "baz"
+        Query "baz"
 
     get "/c" handlerC $
-        queryOpt "foo"
+        QueryOpt "foo"
 
     get "/d" handlerD $
-        queryDef "foo" 0
+        QueryDef "foo" 0
 
     get "/e" handlerE $
-        hdrDef "foo" 0
+        HdrDef "foo" 0
 
     get "/f" handlerF $
-        query "foo"
+        Query "foo"
 
 handlerA :: Media "application" "json" :*: Int :*: ByteString -> IO Response
 handlerA (_ :*: i :*: _) = writeText (fromString . show $ i)
@@ -179,8 +179,8 @@ testMedia = do
 
 sitemapMedia :: Routes ()
 sitemapMedia = do
-    get "/media" handlerJson   accept
-    get "/media" handlerThrift accept
+    get "/media" handlerJson   Accept
+    get "/media" handlerThrift Accept
 
 handlerJson :: Media "application" "json" -> IO Response
 handlerJson _ = writeText "application/json"
