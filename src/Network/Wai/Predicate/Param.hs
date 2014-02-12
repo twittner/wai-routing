@@ -11,7 +11,7 @@ module Network.Wai.Predicate.Param
     ) where
 
 import Data.ByteString (ByteString)
-import Data.ByteString.Read
+import Data.ByteString.From
 import Data.Predicate
 import Network.Wai.Predicate.Error
 import Network.Wai.Predicate.Capture
@@ -20,7 +20,7 @@ import Network.Wai.Predicate.Request
 
 newtype Param a = Param ByteString
 
-instance (Readable a) => Predicate (Param a) Request where
+instance (FromByteString a) => Predicate (Param a) Request where
     type FVal (Param a) = Error
     type TVal (Param a) = a
     apply (Param x)     = apply (Query x :|: Capture x)

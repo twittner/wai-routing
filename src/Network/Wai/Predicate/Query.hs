@@ -12,7 +12,7 @@ module Network.Wai.Predicate.Query
     ) where
 
 import Data.ByteString (ByteString)
-import Data.ByteString.Read
+import Data.ByteString.From
 import Data.Monoid
 import Data.Predicate
 import Network.HTTP.Types.Status
@@ -22,7 +22,7 @@ import Network.Wai.Predicate.Request
 
 newtype Query a = Query ByteString
 
-instance (Readable a) => Predicate (Query a) Request where
+instance (FromByteString a) => Predicate (Query a) Request where
     type FVal (Query a) = Error
     type TVal (Query a) = a
     apply (Query x)     =

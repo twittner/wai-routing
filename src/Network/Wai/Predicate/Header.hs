@@ -12,7 +12,7 @@ module Network.Wai.Predicate.Header
     ) where
 
 import Data.ByteString (ByteString)
-import Data.ByteString.Read
+import Data.ByteString.From
 import Data.CaseInsensitive (mk)
 import Data.List (find)
 import Data.Maybe
@@ -25,7 +25,7 @@ import Network.Wai.Predicate.Request
 
 newtype Hdr a = Hdr ByteString
 
-instance (Readable a) => Predicate (Hdr a) Request where
+instance (FromByteString a) => Predicate (Hdr a) Request where
     type FVal (Hdr a) = Error
     type TVal (Hdr a) = a
     apply (Hdr x)     =

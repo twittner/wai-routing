@@ -5,7 +5,6 @@
 module Tests.Wai.Route (tests) where
 
 import Data.ByteString (ByteString)
-import Data.ByteString.Read
 import Data.Predicate
 import Data.String
 import Network.HTTP.Types
@@ -74,8 +73,8 @@ handlerD foo = writeText (fromString . show $ foo)
 handlerE :: Int -> IO Response
 handlerE foo = writeText (fromString . show $ foo)
 
-handlerF :: CSV Int -> IO Response
-handlerF foo = writeText (fromString . show . sum . list $ foo)
+handlerF :: [Int] -> IO Response
+handlerF foo = writeText (fromString . show . sum $ foo)
 
 testEndpointA :: Application -> Assertion
 testEndpointA f = do

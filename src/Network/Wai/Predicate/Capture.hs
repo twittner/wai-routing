@@ -12,7 +12,7 @@ module Network.Wai.Predicate.Capture
     ) where
 
 import Data.ByteString (ByteString)
-import Data.ByteString.Read
+import Data.ByteString.From
 import Data.Monoid
 import Data.Predicate
 import Network.HTTP.Types.Status
@@ -22,7 +22,7 @@ import Network.Wai.Predicate.Request
 
 newtype Capture a = Capture ByteString
 
-instance (Readable a) => Predicate (Capture a) Request where
+instance (FromByteString a) => Predicate (Capture a) Request where
     type FVal (Capture a) = Error
     type TVal (Capture a) = a
     apply (Capture x)     =

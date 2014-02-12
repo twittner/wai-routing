@@ -12,7 +12,7 @@ module Network.Wai.Predicate.Internal
 
 import Data.Attoparsec (eitherResult, feed, parse)
 import Data.ByteString (ByteString)
-import Data.ByteString.Read
+import Data.ByteString.From
 import Data.List (foldl')
 import Data.Predicate
 import Data.String (fromString)
@@ -20,10 +20,10 @@ import Network.HTTP.Types
 import Network.Wai.Predicate.Error
 import Network.Wai.Predicate.Request
 
-readValues :: Readable a => [ByteString] -> Either ByteString a
+readValues :: FromByteString a => [ByteString] -> Either ByteString a
 readValues = foldl' result (Left "no parse") . map (eitherResult . parse')
   where
-    parse' = flip feed "" . parse readByteString
+    parse' = flip feed "" . parse parser
 
     result (Left  _) (Right x) = Right x
     result (Right x) _         = Right x
