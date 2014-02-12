@@ -102,9 +102,9 @@ testEndpointB f = do
     status400 @=? responseStatus rs0
     "Missing query 'baz'." @=? responseBody rs0
 
---    rs1 <- f . withQuery "baz" "abc" $ rq
---    status400 @=? responseStatus rs1
---    "input does not start with a digit" @=? responseBody rs1
+    rs1 <- f . withQuery "baz" "abc" $ rq
+    status400 @=? responseStatus rs1
+    "Failed reading: Invalid Int" @=? responseBody rs1
 
     rs2 <- f . withQuery "baz" "abc" . withQuery "baz" "123" $ rq
     status200 @=? responseStatus rs2
