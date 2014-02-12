@@ -70,8 +70,8 @@ testQuery = do
 testQueryOpt :: IO ()
 testQueryOpt = do
     let rq0 = fromWaiRequest [] . withQuery "x" "y" . withQuery "x" "z" $ request "/"
-    (T 0 (Just "y")) @=? (apply (QueryOpt "x" :: QueryOpt ByteString) rq0)
+    (T 0 (Just "y")) @=? (apply (Opt (Query "x" :: Query ByteString)) rq0)
 
     let rq1 = fromWaiRequest [] $ request "/"
-    (T 0 Nothing) @=? (apply (QueryOpt "x" :: QueryOpt ByteString) rq1)
+    (T 0 Nothing) @=? (apply (Opt (Query "x" :: Query ByteString)) rq1)
 

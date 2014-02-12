@@ -26,7 +26,7 @@ testFail :: Fail Int Char -> Bool
 testFail x@(Fail c) = apply x () == F c
 
 testAnd :: Rand -> Rand -> Bool
-testAnd a@(Rand (T d x)) b@(Rand (T w y)) = apply (a :&: b) () == T (d + w) (x :*: y)
+testAnd a@(Rand (T d x)) b@(Rand (T w y)) = apply (a :&: b) () == T (d + w) (x ::: y)
 testAnd a@(Rand (T _ _)) b@(Rand (F   y)) = apply (a :&: b) () == F y
 testAnd a@(Rand (F   x)) b@(Rand (T _ _)) = apply (a :&: b) () == F x
 testAnd a@(Rand (F   x)) b@(Rand (F   _)) = apply (a :&: b) () == F x

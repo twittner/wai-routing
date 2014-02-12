@@ -1,3 +1,7 @@
+-- This Source Code Form is subject to the terms of the Mozilla Public
+-- License, v. 2.0. If a copy of the MPL was not distributed with this
+-- file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -114,7 +118,7 @@ instance (Show a, Show b) => Show (a :||: b) where
     show (a :||: b) = "(" ++ show a ++ " || " ++ show b ++ ")"
 
 -- | Data-type used for tupling-up the results of ':&:'.
-data a :*: b = a :*: b deriving (Eq, Show)
+data a ::: b = a ::: b deriving (Eq, Show)
 
 -- | A 'Predicate' instance corresponding to the logical
 -- AND connective of two 'Predicate's.
@@ -123,15 +127,44 @@ data a :&: b = a :&: b
 instance (Predicate a c, Predicate b c, FVal a ~ FVal b) => Predicate (a :&: b) c
   where
     type FVal (a :&: b) = FVal a
-    type TVal (a :&: b) = TVal a :*: TVal b
+    type TVal (a :&: b) = TVal a ::: TVal b
     apply (a :&: b) r   = apply a r `and` apply b r
       where
-        and (T d x) (T w y) = T (d + w) (x :*: y)
+        and (T d x) (T w y) = T (d + w) (x ::: y)
         and (T _ _) (F   f) = F f
         and (F   f) _       = F f
 
 instance (Show a, Show b) => Show (a :&: b) where
     show (a :&: b) = "(" ++ show a ++ " & " ++ show b ++ ")"
+
+-- | An 'Predicate' modifier which makes the underlying predicate optional,
+-- i.e. the 'TVal' becomes a 'Maybe' and in the failure-case 'Nothing' is
+-- returned.
+newtype Opt a = Opt a
+
+instance (Predicate a b) => Predicate (Opt a) b where
+    type FVal (Opt a) = FVal a
+    type TVal (Opt a) = Maybe (TVal a)
+    apply (Opt a) r   = case apply a r of
+        T d x -> T d (Just x)
+        F _   -> T 0 Nothing
+
+instance (Show a) => Show (Opt a) where
+    show (Opt a) = "Optional " ++ show a
+
+-- | An 'Predicate' modifier which returns as 'TVal' the provided default
+-- value if the underlying predicate fails.
+data Def d a = Def d a
+
+instance (Predicate a b, d ~ TVal a) => Predicate (Def d a) b where
+    type FVal (Def d a) = FVal a
+    type TVal (Def d a) = TVal a
+    apply (Def d a) r   = case apply a r of
+        T n x -> T n x
+        F _   -> T 0 d
+
+instance (Show a, Show d) => Show (Def d a) where
+    show (Def d a) = show a ++ " [default = " ++ show d ++ "]"
 
 -- | The 'with' function will invoke the given function only if the predicate 'p'
 -- applied to the test value 'a' evaluates to 'T'.

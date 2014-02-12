@@ -32,12 +32,13 @@ library
         Data.Predicate
         Network.Wai.Predicate
         Network.Wai.Predicate.Accept
+        Network.Wai.Predicate.Content
         Network.Wai.Predicate.Error
+        Network.Wai.Predicate.Header
+        Network.Wai.Predicate.MediaType
         Network.Wai.Predicate.Param
         Network.Wai.Predicate.Query
-        Network.Wai.Predicate.Header
-        Network.Wai.Predicate.Content
-        Network.Wai.Predicate.MediaType
+        Network.Wai.Predicate.Request
         Network.Wai.Predicate.Tutorial
         Network.Wai.Route
 
@@ -45,7 +46,6 @@ library
         Network.Wai.Predicate.Internal
         Network.Wai.Predicate.Parser.MediaType
         Network.Wai.Predicate.Parser.Shared
-        Network.Wai.Predicate.Request
 
     build-depends:
         attoparsec       >= 0.10  && < 0.12

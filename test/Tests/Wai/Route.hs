@@ -48,19 +48,19 @@ sitemap = do
         Query "baz"
 
     get "/c" handlerC $
-        QueryOpt "foo"
+        Opt (Query "foo")
 
     get "/d" handlerD $
-        QueryDef "foo" 0
+        Def 0 (Query "foo")
 
     get "/e" handlerE $
-        HdrDef "foo" 0
+        Def 0 (Hdr "foo")
 
     get "/f" handlerF $
         Query "foo"
 
-handlerA :: Media "application" "json" :*: Int :*: ByteString -> IO Response
-handlerA (_ :*: i :*: _) = writeText (fromString . show $ i)
+handlerA :: Media "application" "json" ::: Int ::: ByteString -> IO Response
+handlerA (_ ::: i ::: _) = writeText (fromString . show $ i)
 
 handlerB :: Int -> IO Response
 handlerB baz = writeText (fromString . show $ baz)
@@ -124,7 +124,7 @@ testEndpointC f = do
     "Just 123" @=? responseBody rs1
 
     rs2 <- f . withQuery "foo" "abc" $ rq
-    status400 @=? responseStatus rs2
+    status200 @=? responseStatus rs2
 
 
 testEndpointD :: Application -> Assertion
@@ -140,7 +140,8 @@ testEndpointD f = do
     "42"      @=? responseBody rs1
 
     rs2 <- f . withQuery "foo" "yyy" $ rq
-    status400 @=? responseStatus rs2
+    status200 @=? responseStatus rs2
+    "0"       @=? responseBody rs2
 
 
 testEndpointE :: Application -> Assertion
@@ -156,7 +157,8 @@ testEndpointE f = do
     "42"      @=? responseBody rs1
 
     rs2 <- f $ withHeader "foo" "abc" rq
-    status400 @=? responseStatus rs2
+    status200 @=? responseStatus rs2
+    "0"       @=? responseBody rs2
 
 
 testEndpointF :: Application -> Assertion

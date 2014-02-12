@@ -80,7 +80,7 @@ propagate the meta-data and 'Data.Predicate.Delta' appropriately.
 
 If 'Data.Predicate.:&:' evaluates to 'Data.Predicate.T' it has to combine
 the meta-data of both predicates, and it uses the product type
-'Data.Predicate.:*:' for this. This type also has a data constructor with
+'Data.Predicate.:::' for this. This type also has a data constructor with
 the same symbol, so one can combine many predicates without having to
 nest the meta-data pairs.
 
@@ -135,7 +135,7 @@ One way is to just evaluate them against a given request, e.g.
 someHandler :: Application
 someHandler r =
     case apply (Accept :&: Query \"baz\") r of
-        T ((_ :: Media \"text\" \"plain\") :*: bazValue) -> ...
+        T ((_ :: Media \"text\" \"plain\") ::: bazValue) -> ...
         F (Just (Error st msg))                      -> ...
         F Nothing                                    -> ...
 @
@@ -157,9 +157,9 @@ sitemap = do
 The handlers then encode their pre-conditions in their type-signature:
 
 @
-handlerA :: Media \"application\" \"json\" :*: ByteString :*: ByteString -> IO Response
-handlerB :: Media \"text\" \"plain\" :*: (ByteString :+: ByteString) :*: ByteString -> IO Response
-handlerC :: Media \"application\" \"json\" :*: Char -> IO Response
+handlerA :: Media \"application\" \"json\" ::: ByteString ::: ByteString -> IO Response
+handlerB :: Media \"text\" \"plain\" ::: (ByteString :+: ByteString) ::: ByteString -> IO Response
+handlerC :: Media \"application\" \"json\" ::: Char -> IO Response
 handlerD :: Media \"application\" \"x-protobuf\" -> IO Response
 handlerE :: Media \"application\" \"xml\" -> IO Response
 @

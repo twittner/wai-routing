@@ -8,7 +8,6 @@
 module Network.Wai.Predicate.Internal
     ( readValues
     , rqApply
-    , rqApplyMaybe
     ) where
 
 import Data.Attoparsec (eitherResult, feed, parse)
@@ -31,19 +30,11 @@ readValues = foldl' result (Left "no parse") . map (eitherResult . parse')
     result _         (Left  x) = Left (fromString x)
 
 rqApply :: (Request -> [ByteString])
-        -> Maybe a
         -> ([ByteString] -> Either ByteString a)
         -> Error
         -> Request
         -> Boolean Error a
-rqApply f def reader e r = case f r of
-    [] -> maybe (F e) (T 0) def
-    vs -> either (F . err status400) (T 0) $ reader vs
-
-rqApplyMaybe :: (Request -> [ByteString])
-             -> ([ByteString] -> Either ByteString a)
-             -> Request
-             -> Boolean Error (Maybe a)
-rqApplyMaybe f reader r = case f r of
-    [] -> T 0 Nothing
-    vs -> either (F . err status400) (T 0 . Just) $ reader vs
+rqApply f reader e r =
+    case f r of
+        [] -> F e
+        vs -> either (F . err status400) (T 0) $ reader vs

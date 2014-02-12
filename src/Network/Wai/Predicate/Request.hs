@@ -2,8 +2,12 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 module Network.Wai.Predicate.Request
     ( Request
+    , GetRequest (..)
     , fromWaiRequest
     , waiRequest
     , method
@@ -16,6 +20,7 @@ module Network.Wai.Predicate.Request
 import Data.ByteString (ByteString)
 import Data.CaseInsensitive (mk)
 import Data.Maybe (mapMaybe)
+import Data.Predicate
 import Network.HTTP.Types
 
 import qualified Network.Wai as Wai
@@ -24,6 +29,16 @@ data Request = Request
     { captures :: [(ByteString, ByteString)]
     , request  :: Wai.Request
     }
+
+data GetRequest a = GetRequest
+
+instance Predicate (GetRequest a) Request where
+    type FVal (GetRequest a) = a
+    type TVal (GetRequest a) = Wai.Request
+    apply GetRequest r       = T 0 (request r)
+
+instance Show (GetRequest a) where
+    show GetRequest = "Request"
 
 fromWaiRequest :: [(ByteString, ByteString)] -> Wai.Request -> Request
 fromWaiRequest = Request
