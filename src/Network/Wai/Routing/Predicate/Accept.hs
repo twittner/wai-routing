@@ -42,7 +42,7 @@ type2 m = withSing (f m)
     f :: Accept t s -> Sing s -> ByteString
     f _ s = pack $ fromSing s
 
-instance (SingI t, SingI s) => Predicate (Accept t s) Request where
+instance (SingI t, SingI s) => Predicate (Accept t s) Req where
     type FVal (Accept t s) = Error
     type TVal (Accept t s) = Media t s
     apply a r = let mtypes = M.readMediaTypes "accept" r in

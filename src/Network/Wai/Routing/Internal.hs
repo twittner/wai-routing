@@ -29,10 +29,10 @@ readValues = foldl' result (Left "no parse") . map (eitherResult . parse')
     result (Right x) _         = Right x
     result _         (Left  x) = Left (fromString x)
 
-rqApply :: (Request -> [ByteString])
+rqApply :: (Req -> [ByteString])
         -> ([ByteString] -> Either ByteString a)
         -> Error
-        -> Request
+        -> Req
         -> Boolean Error a
 rqApply f reader e r =
     case f r of

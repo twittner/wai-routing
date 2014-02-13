@@ -6,7 +6,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module Network.Wai.Routing.Request
-    ( Request
+    ( Req
     , GetRequest (..)
     , fromWaiRequest
     , waiRequest
@@ -21,44 +21,45 @@ import Data.ByteString (ByteString)
 import Data.CaseInsensitive (mk)
 import Data.Maybe (mapMaybe)
 import Network.HTTP.Types
+import Network.Wai (Request)
 import Network.Wai.Routing.Predicate.Predicate
 
 import qualified Network.Wai as Wai
 
-data Request = Request
+data Req = Req
     { captures :: [(ByteString, ByteString)]
-    , request  :: Wai.Request
+    , request  :: Request
     }
 
 data GetRequest a = GetRequest
 
-instance Predicate (GetRequest a) Request where
+instance Predicate (GetRequest a) Req where
     type FVal (GetRequest a) = a
-    type TVal (GetRequest a) = Wai.Request
+    type TVal (GetRequest a) = Request
     apply GetRequest r       = T 0 (request r)
 
-fromWaiRequest :: [(ByteString, ByteString)] -> Wai.Request -> Request
-fromWaiRequest = Request
+fromWaiRequest :: [(ByteString, ByteString)] -> Request -> Req
+fromWaiRequest = Req
 
-waiRequest :: Request -> Wai.Request
+waiRequest :: Req -> Request
 waiRequest = request
 
-headers :: Request -> RequestHeaders
+headers :: Req -> RequestHeaders
 headers = Wai.requestHeaders . request
 
-method :: Request -> Method
+method :: Req -> Method
 method = Wai.requestMethod . request
 
-lookupHeader :: ByteString -> Request -> [ByteString]
+lookupHeader :: ByteString -> Req -> [ByteString]
 lookupHeader name = map snd
                   . filter ((mk name ==) . fst)
                   . Wai.requestHeaders
                   . request
 
-lookupCapture :: ByteString -> Request -> [ByteString]
+lookupCapture :: ByteString -> Req -> [ByteString]
 lookupCapture name = map snd . filter ((name ==) . fst) . captures
 
-lookupQuery :: ByteString -> Request -> [ByteString]
+lookupQuery :: ByteString -> Req -> [ByteString]
 lookupQuery name = mapMaybe snd
                  . filter ((name ==) . fst)
                  . Wai.queryString

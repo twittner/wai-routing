@@ -41,7 +41,7 @@ type2 m = withSing (f m)
     f :: ContentType t s -> Sing s -> ByteString
     f _ s = pack $ fromSing s
 
-instance (SingI t, SingI s) => Predicate (ContentType t s) Request where
+instance (SingI t, SingI s) => Predicate (ContentType t s) Req where
     type FVal (ContentType t s) = Error
     type TVal (ContentType t s) = Media t s
     apply c r = let mtypes = M.readMediaTypes "content-type" r in

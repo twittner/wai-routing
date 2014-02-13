@@ -61,7 +61,7 @@ class Predicate p a where
 All predicates are instances of this type-class, which does not
 specify the type against which the predicate is evaluated, nor the types
 of actual meta-data for the true/false case of the Boolean returned.
-WAI related predicates are defined against 'Network.Wai.Routing.Request'
+WAI related predicates are defined against 'Network.Wai.Routing.Request.Req'
 which holds a regular 'Network.Wai.Request' and path capture variables.
 In case predicates fail, they return a status code and an optional message.
 
@@ -102,7 +102,7 @@ As an example of how these operators are used, see below in section \"Routes\".
 @
 newtype Query = Query ByteString
 
-instance Predicate Query Request where
+instance Predicate Query Req where
     type FVal Query = Error
     type TVal Query = ByteString
     apply (Query x) r =
@@ -111,12 +111,12 @@ instance Predicate Query Request where
             (v:_) -> T [] v
 @
 
-This is a simple example looking for the existence of a 'Request' query
+This is a simple example looking for the existence of a 'Req' query
 parameter with the given name. In the success case, the query value is
 returned.
 
 As mentioned before, WAI predicates usually fix the type @a@ from
-@Predicate@ above to 'Network.Wai.Routing.Request'. The associated
+@Predicate@ above to 'Network.Wai.Routing.Request.Req'. The associated
 types 'Network.Wai.Routing.Predicate.Predicate.FVal' and
 'Network.Wai.Routing.Predicate.Predicate.TVal' denote the meta-data
 types of the predicate. In this example, the meta-date type is

@@ -20,14 +20,14 @@ import Network.Wai.Routing.Predicate.Predicate
 
 newtype Param a = Param ByteString
 
-instance (FromByteString a) => Predicate (Param a) Request where
+instance (FromByteString a) => Predicate (Param a) Req where
     type FVal (Param a) = Error
     type TVal (Param a) = a
     apply (Param x)     = apply (Query x :|: Capture x)
 
 newtype HasParam = HasParam ByteString
 
-instance Predicate HasParam Request where
+instance Predicate HasParam Req where
     type FVal HasParam = Error
     type TVal HasParam = ()
     apply (HasParam x) = apply (HasQuery x :|: HasCapture x)

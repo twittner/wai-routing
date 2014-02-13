@@ -8,14 +8,13 @@ import Data.ByteString (ByteString)
 import Data.String
 import Network.HTTP.Types
 import Network.Wai
-import Network.Wai.Routing hiding (Request)
+import Network.Wai.Routing
 import Test.HUnit hiding (Test)
 import Test.Tasty
 import Test.Tasty.HUnit
 import Tests.Wai.Util
 
-import qualified Data.ByteString.Lazy  as Lazy
-import qualified Network.Wai.Routing   as R
+import qualified Data.ByteString.Lazy as Lazy
 
 tests :: TestTree
 tests = testGroup "Network.Wai.Routing"
@@ -194,7 +193,7 @@ handlerJson _ = writeText "application/json"
 handlerThrift :: Media "application" "x-thrift" -> IO Response
 handlerThrift _ = writeText "application/x-thrift"
 
-expectMedia :: ByteString -> ByteString -> (R.Request -> IO Response) -> Assertion
+expectMedia :: ByteString -> ByteString -> (Req -> IO Response) -> Assertion
 expectMedia h res m = do
     let rq = defaultRequest { rawPathInfo = "/media" }
     rs <- m . fromWaiRequest [] . withHeader "Accept" h $ rq

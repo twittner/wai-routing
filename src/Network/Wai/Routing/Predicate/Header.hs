@@ -25,7 +25,7 @@ import Network.Wai.Routing.Request
 
 newtype Hdr a = Hdr ByteString
 
-instance (FromByteString a) => Predicate (Hdr a) Request where
+instance (FromByteString a) => Predicate (Hdr a) Req where
     type FVal (Hdr a) = Error
     type TVal (Hdr a) = a
     apply (Hdr x)     =
@@ -34,7 +34,7 @@ instance (FromByteString a) => Predicate (Hdr a) Request where
 
 newtype HasHdr = HasHdr ByteString
 
-instance Predicate HasHdr Request where
+instance Predicate HasHdr Req where
     type FVal HasHdr   = Error
     type TVal HasHdr   = ()
     apply (HasHdr x) r =

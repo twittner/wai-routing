@@ -22,7 +22,7 @@ import Network.Wai.Routing.Request
 
 newtype Capture a = Capture ByteString
 
-instance (FromByteString a) => Predicate (Capture a) Request where
+instance (FromByteString a) => Predicate (Capture a) Req where
     type FVal (Capture a) = Error
     type TVal (Capture a) = a
     apply (Capture x)     =
@@ -31,7 +31,7 @@ instance (FromByteString a) => Predicate (Capture a) Request where
 
 newtype HasCapture = HasCapture ByteString
 
-instance Predicate HasCapture Request where
+instance Predicate HasCapture Req where
     type FVal HasCapture   = Error
     type TVal HasCapture   = ()
     apply (HasCapture x) r =

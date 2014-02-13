@@ -22,7 +22,7 @@ import Network.Wai.Routing.Request
 
 newtype Query a = Query ByteString
 
-instance (FromByteString a) => Predicate (Query a) Request where
+instance (FromByteString a) => Predicate (Query a) Req where
     type FVal (Query a) = Error
     type TVal (Query a) = a
     apply (Query x)     =
@@ -31,7 +31,7 @@ instance (FromByteString a) => Predicate (Query a) Request where
 
 newtype HasQuery = HasQuery ByteString
 
-instance Predicate HasQuery Request where
+instance Predicate HasQuery Req where
     type FVal HasQuery   = Error
     type TVal HasQuery   = ()
     apply (HasQuery x) r =

@@ -35,8 +35,7 @@ import Data.List hiding (head, delete)
 import Data.Maybe (fromMaybe)
 import Data.Monoid
 import Network.HTTP.Types
-import Network.Wai (Response, responseLBS, responseBuilder)
-import Network.Wai (rawPathInfo)
+import Network.Wai (Request, Response, responseLBS, responseBuilder, rawPathInfo)
 import Network.Wai.Routing.Predicate
 import Network.Wai.Routing.Error
 import Network.Wai.Routing.Request
@@ -45,7 +44,6 @@ import qualified Data.ByteString.Char8  as C
 import qualified Data.ByteString.Lazy   as Lazy
 import qualified Data.List              as L
 import qualified Network.Wai.Route.Tree as Tree
-import qualified Network.Wai            as Wai
 
 data Route m = Route
     { _method  :: !Method
@@ -59,7 +57,7 @@ data Handler m = Handler
     }
 
 data Pack m where
-    Pack :: (Predicate p Request, FVal p ~ Error)
+    Pack :: (Predicate p Req, FVal p ~ Error)
          => p
          -> (TVal p -> m Response)
          -> Pack m
@@ -92,7 +90,7 @@ instance Monad (Routes m) where
 
 -- | Add a route for some 'Method' and path (potentially with variable
 -- captures), and constrained the some 'Predicate'.
-addRoute :: (Monad m, Predicate p Request, FVal p ~ Error)
+addRoute :: (Monad m, Predicate p Req, FVal p ~ Error)
          => Method
          -> ByteString             -- ^ path
          -> (TVal p -> m Response) -- ^ handler
@@ -103,7 +101,7 @@ addRoute m r x p = Routes . modify $ \(St !rr !f) ->
 
 -- | Specialisation of 'addRoute' for a specific HTTP 'Method'.
 get, head, post, put, delete, trace, options, connect ::
-    (Monad m, Predicate p Request, FVal p ~ Error)
+    (Monad m, Predicate p Req, FVal p ~ Error)
     => ByteString             -- ^ path
     -> (TVal p -> m Response) -- ^ handler
     -> p                      -- ^ 'Predicate'
@@ -122,7 +120,7 @@ renderer f = Routes . modify $ \(St !rr _) -> St rr f
 
 -- | A WAI 'Application' which routes requests to handlers based on
 -- predicated route declarations.
-route :: Monad m => Routes m a -> Wai.Request -> m Response
+route :: Monad m => Routes m a -> Request -> m Response
 route rm rq = do
     let tr = Tree.fromList $ expand rm
     case Tree.lookup tr (Tree.segments $ rawPathInfo rq) of
@@ -131,7 +129,7 @@ route rm rq = do
   where
     notFound = responseLBS status404 [] ""
 
-expand :: Monad m => Routes m a -> [(ByteString, Request -> m Response)]
+expand :: Monad m => Routes m a -> [(ByteString, Req -> m Response)]
 expand (Routes routes) =
     let St rr f = execState routes zero in
     map (\g -> (_path (L.head g), select f g)) (normalise rr)
@@ -165,7 +163,7 @@ normalise rr =
 -- (2) Evaluate 'Route' predicates.
 -- (3) Pick the first one which is 'Good', or else respond with status
 --     and message of the first one.
-select :: Monad m => Renderer -> [Route m] -> Request -> m Response
+select :: Monad m => Renderer -> [Route m] -> Req -> m Response
 select render routes req = do
     let ms = filter ((method req ==) . _method) routes
     if null ms
