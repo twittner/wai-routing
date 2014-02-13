@@ -41,6 +41,7 @@ library
         Network.Wai.Routing.Predicate
         Network.Wai.Routing.Predicate.Predicate
         Network.Wai.Routing.Predicate.Accept
+        Network.Wai.Routing.Predicate.Capture
         Network.Wai.Routing.Predicate.Content
         Network.Wai.Routing.Predicate.Header
         Network.Wai.Routing.Predicate.Param
