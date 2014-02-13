@@ -11,10 +11,8 @@
 module Network.Wai.Routing.Route
     ( Routes
     , route
-    , expandRoutes
-    , showRoutes
-    , renderErrorWith
-
+    , expand
+    , renderer
     , addRoute
     , get
     , Network.Wai.Routing.Route.head
@@ -61,7 +59,7 @@ data Handler m = Handler
     }
 
 data Pack m where
-    Pack :: (Show p, Predicate p Request, FVal p ~ Error)
+    Pack :: (Predicate p Request, FVal p ~ Error)
          => p
          -> (TVal p -> m Response)
          -> Pack m
@@ -94,7 +92,7 @@ instance Monad (Routes m) where
 
 -- | Add a route for some 'Method' and path (potentially with variable
 -- captures), and constrained the some 'Predicate'.
-addRoute :: (Monad m, Show p, Predicate p Request, FVal p ~ Error)
+addRoute :: (Monad m, Predicate p Request, FVal p ~ Error)
          => Method
          -> ByteString             -- ^ path
          -> (TVal p -> m Response) -- ^ handler
@@ -105,7 +103,7 @@ addRoute m r x p = Routes . modify $ \(St !rr !f) ->
 
 -- | Specialisation of 'addRoute' for a specific HTTP 'Method'.
 get, head, post, put, delete, trace, options, connect ::
-    (Monad m, Show p, Predicate p Request, FVal p ~ Error)
+    (Monad m, Predicate p Request, FVal p ~ Error)
     => ByteString             -- ^ path
     -> (TVal p -> m Response) -- ^ handler
     -> p                      -- ^ 'Predicate'
@@ -119,34 +117,22 @@ trace   = addRoute (renderStdMethod TRACE)
 options = addRoute (renderStdMethod OPTIONS)
 connect = addRoute (renderStdMethod CONNECT)
 
-renderErrorWith :: Renderer -> Routes m ()
-renderErrorWith f = Routes . modify $ \(St !rr _) -> St rr f
-
--- | Turn route definitions into a list of 'String's.
-showRoutes :: Routes m a -> [String]
-showRoutes (Routes routes) =
-    let St rr _ = execState routes zero
-    in flip map (concat (normalise rr)) $ \x ->
-        case _pred x of
-            Pack p _ -> shows (_method x)
-                      . (' ':)
-                      . shows (_path x)
-                      . (' ':)
-                      . shows p $ ""
+renderer :: Renderer -> Routes m ()
+renderer f = Routes . modify $ \(St !rr _) -> St rr f
 
 -- | A WAI 'Application' which routes requests to handlers based on
 -- predicated route declarations.
 route :: Monad m => Routes m a -> Wai.Request -> m Response
 route rm rq = do
-    let tr = Tree.fromList $ expandRoutes rm
+    let tr = Tree.fromList $ expand rm
     case Tree.lookup tr (Tree.segments $ rawPathInfo rq) of
         Just (f, v) -> f (fromWaiRequest v rq)
         Nothing     -> return notFound
   where
     notFound = responseLBS status404 [] ""
 
-expandRoutes :: Monad m => Routes m a -> [(ByteString, Request -> m Response)]
-expandRoutes (Routes routes) =
+expand :: Monad m => Routes m a -> [(ByteString, Request -> m Response)]
+expand (Routes routes) =
     let St rr f = execState routes zero in
     map (\g -> (_path (L.head g), select f g)) (normalise rr)
 

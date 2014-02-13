@@ -15,7 +15,7 @@ where
 
 import Control.Monad
 import Data.ByteString (ByteString)
-import Data.ByteString.Char8 (pack, unpack)
+import Data.ByteString.Char8 (pack)
 import Data.Monoid hiding (All)
 import GHC.TypeLits
 import Data.Maybe
@@ -53,9 +53,6 @@ instance (SingI t, SingI s) => Predicate (Accept t s) Request where
                 []  -> F (err status406 msg)
       where
         msg = "Expected 'Accept: " <> type1 a <> "/" <> type2 a <> "'."
-
-instance (SingI t, SingI s) => Show (Accept t s) where
-    show a = unpack $ "Accept: " <> type1 a <> "/" <> type2 a
 
 findMediaType :: (SingI t, SingI s) => Accept t s -> [M.MediaType] -> [Media t s]
 findMediaType a = mapMaybe (\m -> do

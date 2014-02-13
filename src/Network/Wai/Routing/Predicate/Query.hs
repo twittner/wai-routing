@@ -29,9 +29,6 @@ instance (FromByteString a) => Predicate (Query a) Request where
         let msg = "Missing query '" <> x <> "'." in
         rqApply (lookupQuery x) readValues (err status400 msg)
 
-instance Show (Query a) where
-    show (Query n) = "Query: " ++ show n
-
 newtype HasQuery = HasQuery ByteString
 
 instance Predicate HasQuery Request where
@@ -41,6 +38,3 @@ instance Predicate HasQuery Request where
         if null (lookupQuery x r)
             then F (err status400 ("Missing query '" <> x <> "'."))
             else T 0 ()
-
-instance Show HasQuery where
-    show (HasQuery x) = "HasQuery: " ++ show x

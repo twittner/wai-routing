@@ -53,8 +53,8 @@ instance Predicate (Const f t) a where
     type TVal (Const f t) = t
     apply (Const a) _     = T 0 a
 
-instance Show t => Show (Const f t) where
-    show (Const a) = "Const: " ++ show a
+true :: Const a ()
+true = Const ()
 
 -- | A 'Predicate' instance which always returns 'F' with
 -- the given value as F's meta-data.
@@ -65,9 +65,6 @@ instance Predicate (Fail f t) a where
     type FVal (Fail f t) = f
     type TVal (Fail f t) = t
     apply (Fail a) _     = F a
-
-instance Show f => Show (Fail f t) where
-    show (Fail a) = "Fail: " ++ show a
 
 -- | A 'Predicate' instance corresponding to the logical
 -- OR connective of two 'Predicate's. It requires the
@@ -88,9 +85,6 @@ instance (Predicate a c, Predicate b c, TVal a ~ TVal b, FVal a ~ FVal b) => Pre
         or x@(T _  _)   (F    _) = x
         or (F      _) x@(T _  _) = x
         or (F      _) x@(F    _) = x
-
-instance (Show a, Show b) => Show (a :|: b) where
-    show (a :|: b) = "(" ++ show a ++ " | " ++ show b ++ ")"
 
 type a :+: b = Either a b
 
@@ -114,9 +108,6 @@ instance (Predicate a c, Predicate b c, FVal a ~ FVal b) => Predicate (a :||: b)
         or (F     _) (T  d  t) = T d (Right t)
         or (F     _) (F     f) = F f
 
-instance (Show a, Show b) => Show (a :||: b) where
-    show (a :||: b) = "(" ++ show a ++ " || " ++ show b ++ ")"
-
 -- | Data-type used for tupling-up the results of ':&:'.
 data a ::: b = a ::: b deriving (Eq, Show)
 
@@ -134,9 +125,6 @@ instance (Predicate a c, Predicate b c, FVal a ~ FVal b) => Predicate (a :&: b) 
         and (T _ _) (F   f) = F f
         and (F   f) _       = F f
 
-instance (Show a, Show b) => Show (a :&: b) where
-    show (a :&: b) = "(" ++ show a ++ " & " ++ show b ++ ")"
-
 -- | An 'Predicate' modifier which makes the underlying predicate optional,
 -- i.e. the 'TVal' becomes a 'Maybe' and in the failure-case 'Nothing' is
 -- returned.
@@ -149,9 +137,6 @@ instance (Predicate a b) => Predicate (Opt a) b where
         T d x -> T d (Just x)
         F _   -> T 0 Nothing
 
-instance (Show a) => Show (Opt a) where
-    show (Opt a) = "Optional " ++ show a
-
 -- | An 'Predicate' modifier which returns as 'TVal' the provided default
 -- value if the underlying predicate fails.
 data Def d a = Def d a
@@ -162,9 +147,6 @@ instance (Predicate a b, d ~ TVal a) => Predicate (Def d a) b where
     apply (Def d a) r   = case apply a r of
         T n x -> T n x
         F _   -> T 0 d
-
-instance (Show a, Show d) => Show (Def d a) where
-    show (Def d a) = show a ++ " [default = " ++ show d ++ "]"
 
 -- | The 'with' function will invoke the given function only if the predicate 'p'
 -- applied to the test value 'a' evaluates to 'T'.

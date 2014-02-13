@@ -32,9 +32,6 @@ instance (FromByteString a) => Predicate (Hdr a) Request where
         let msg = "Missing header '" <> x <> "'." in
         rqApply (lookupHeader x) readValues (err status400 msg)
 
-instance Show (Hdr a) where
-    show (Hdr n) = "Hdr: " ++ show n
-
 newtype HasHdr = HasHdr ByteString
 
 instance Predicate HasHdr Request where
@@ -44,7 +41,4 @@ instance Predicate HasHdr Request where
         if isJust $ find ((mk x ==) . fst) (headers r)
             then T 0 ()
             else F (err status400 ("Missing header '" <> x <> "'."))
-
-instance Show HasHdr where
-    show (HasHdr x) = "HasHdr: " ++ show x
 

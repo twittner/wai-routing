@@ -25,8 +25,10 @@ tests = testGroup "Network.Wai.Routing"
 
 testSitemap :: IO ()
 testSitemap = do
-    let routes  = expandRoutes sitemap
-    assertEqual "Endpoints" ["/a", "/b", "/c", "/d", "/e", "/f"] (map fst routes)
+    let routes  = expand sitemap
+    assertEqual "Endpoints"
+        ["/a", "/b", "/c", "/d", "/e", "/f", "/g"]
+        (map fst routes)
 
     let handler = route sitemap
     testEndpointA handler
@@ -56,6 +58,8 @@ sitemap = do
     get "/f" handlerF $
         Query "foo"
 
+    get "/g" handlerG true
+
 handlerA :: Media "application" "json" ::: Int ::: ByteString -> IO Response
 handlerA (_ ::: i ::: _) = writeText (fromString . show $ i)
 
@@ -73,6 +77,9 @@ handlerE foo = writeText (fromString . show $ foo)
 
 handlerF :: [Int] -> IO Response
 handlerF foo = writeText (fromString . show . sum $ foo)
+
+handlerG :: () -> IO Response
+handlerG = const $ writeText "all good"
 
 testEndpointA :: Application -> Assertion
 testEndpointA f = do
@@ -172,7 +179,7 @@ testEndpointF f = do
 
 testMedia :: IO ()
 testMedia = do
-    let [(_, h)] = expandRoutes sitemapMedia
+    let [(_, h)] = expand sitemapMedia
     expectMedia "application/json;q=0.3, application/x-thrift;q=0.7" "application/x-thrift" h
     expectMedia "application/json;q=0.7, application/x-thrift;q=0.3" "application/json" h
 

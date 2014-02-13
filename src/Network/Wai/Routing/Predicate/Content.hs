@@ -14,7 +14,7 @@ module Network.Wai.Routing.Predicate.Content
 
 import Control.Monad
 import Data.ByteString (ByteString)
-import Data.ByteString.Char8 (pack, unpack)
+import Data.ByteString.Char8 (pack)
 import Data.Monoid hiding (All)
 import GHC.TypeLits
 import Data.Maybe
@@ -50,9 +50,6 @@ instance (SingI t, SingI s) => Predicate (ContentType t s) Request where
             []  -> F (err status415 msg)
       where
         msg = "Expected 'Content-Type: " <> type1 c <> "/" <> type2 c <> "'."
-
-instance (SingI t, SingI s) => Show (ContentType t s) where
-    show c = unpack $ "ContentType: " <> type1 c <> "/" <> type2 c
 
 findContentType :: (SingI t, SingI s) => ContentType t s -> [M.MediaType] -> [Media t s]
 findContentType c = mapMaybe (\m -> do

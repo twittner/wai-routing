@@ -29,9 +29,6 @@ instance (FromByteString a) => Predicate (Capture a) Request where
         let msg = "Missing path parameter '" <> x <> "'." in
         rqApply (lookupCapture x) readValues (err status400 msg)
 
-instance Show (Capture a) where
-    show (Capture n) = "Capture: " ++ show n
-
 newtype HasCapture = HasCapture ByteString
 
 instance Predicate HasCapture Request where
@@ -41,7 +38,3 @@ instance Predicate HasCapture Request where
         if null (lookupQuery x r)
             then F (err status400 ("Missing path parameter '" <> x <> "'."))
             else T 0 ()
-
-instance Show HasCapture where
-    show (HasCapture x) = "HasCapture: " ++ show x
-

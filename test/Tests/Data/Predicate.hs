@@ -12,18 +12,10 @@ import Test.Tasty.QuickCheck
 
 tests :: TestTree
 tests = testGroup "Data.Predicate"
-    [ testProperty "Const" testConst
-    , testProperty "Fail" testFail
-    , testProperty "(:&:)" testAnd
+    [ testProperty "(:&:)" testAnd
     , testProperty "(:||:)" testOr
     , testProperty "(:|:)" testOr'
     ]
-
-testConst :: Const Int Char -> Bool
-testConst x@(Const c) = apply x () == T 0 c
-
-testFail :: Fail Int Char -> Bool
-testFail x@(Fail c) = apply x () == F c
 
 testAnd :: Rand -> Rand -> Bool
 testAnd a@(Rand (T d x)) b@(Rand (T w y)) = apply (a :&: b) () == T (d + w) (x ::: y)
@@ -57,12 +49,6 @@ instance Arbitrary (Boolean Int Char) where
         oneof [ T <$> (arbitrary :: Gen Delta) <*> (arbitrary :: Gen Char)
               , F <$> (arbitrary :: Gen Int)
               ]
-
-instance Arbitrary (Const Int Char) where
-    arbitrary = Const <$> (arbitrary :: Gen Char)
-
-instance Arbitrary (Fail Int Char) where
-    arbitrary = Fail <$> (arbitrary :: Gen Int)
 
 instance Arbitrary Rand where
     arbitrary = Rand <$> (arbitrary :: Gen (Boolean Int Char))

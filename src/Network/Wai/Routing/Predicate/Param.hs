@@ -25,16 +25,10 @@ instance (FromByteString a) => Predicate (Param a) Request where
     type TVal (Param a) = a
     apply (Param x)     = apply (Query x :|: Capture x)
 
-instance Show (Param a) where
-    show (Param n) = "Param: " ++ show n
-
 newtype HasParam = HasParam ByteString
 
 instance Predicate HasParam Request where
     type FVal HasParam = Error
     type TVal HasParam = ()
     apply (HasParam x) = apply (HasQuery x :|: HasCapture x)
-
-instance Show HasParam where
-    show (HasParam x) = "HasParam: " ++ show x
 

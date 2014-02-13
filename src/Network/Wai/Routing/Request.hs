@@ -37,9 +37,6 @@ instance Predicate (GetRequest a) Request where
     type TVal (GetRequest a) = Wai.Request
     apply GetRequest r       = T 0 (request r)
 
-instance Show (GetRequest a) where
-    show GetRequest = "Request"
-
 fromWaiRequest :: [(ByteString, ByteString)] -> Wai.Request -> Request
 fromWaiRequest = Request
 
