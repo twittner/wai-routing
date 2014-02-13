@@ -10,7 +10,10 @@ stability:           experimental
 category:            Web
 build-type:          Simple
 cabal-version:       >= 1.10
-extra-source-files:  README.md
+
+extra-source-files:
+    README.md
+    examples/*.hs
 
 description:
     Provides the definition of a type-class 'Predicate' together
@@ -18,8 +21,8 @@ description:
     constrain the set of possible WAI applications in a type-safe
     way.
     .
-    For details see the tutorial at
-    <http://hackage.haskell.org/package/wai-routing/docs/Network-Wai-Routing-Tutorial.html>
+    For details have a look ate the haddock documentation of
+    @Network.Wai.Routing.Tutorial@.
 
 source-repository head
     type:             git
