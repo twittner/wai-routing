@@ -8,7 +8,7 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
 
-module Data.Predicate where
+module Network.Wai.Routing.Predicate.Predicate where
 
 import Prelude hiding (and, or)
 

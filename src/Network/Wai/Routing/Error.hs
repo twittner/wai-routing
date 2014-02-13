@@ -2,12 +2,12 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-module Network.Wai.Predicate.Error where
+module Network.Wai.Routing.Error where
 
 import Data.ByteString (ByteString)
 import Network.HTTP.Types.Status
 
--- | The error type used as 'F' meta-data in all snap predicates.
+-- | The error type used as 'F' meta-data in all WAI predicates.
 data Error = Error
     { status  :: !Status          -- ^ (HTTP) status code
     , message :: Maybe ByteString -- ^ optional status message

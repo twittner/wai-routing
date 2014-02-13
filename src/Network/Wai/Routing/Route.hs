@@ -8,7 +8,7 @@
 {-# LANGUAGE TypeOperators     #-}
 {-# LANGUAGE FlexibleContexts  #-}
 
-module Network.Wai.Route
+module Network.Wai.Routing.Route
     ( Routes
     , route
     , expandRoutes
@@ -17,7 +17,7 @@ module Network.Wai.Route
 
     , addRoute
     , get
-    , Network.Wai.Route.head
+    , Network.Wai.Routing.Route.head
     , post
     , put
     , delete
@@ -36,11 +36,12 @@ import Data.Function
 import Data.List hiding (head, delete)
 import Data.Maybe (fromMaybe)
 import Data.Monoid
-import Data.Predicate
 import Network.HTTP.Types
 import Network.Wai (Response, Application, responseLBS, responseBuilder)
 import Network.Wai (rawPathInfo)
-import Network.Wai.Predicate
+import Network.Wai.Routing.Predicate
+import Network.Wai.Routing.Error
+import Network.Wai.Routing.Request
 
 import qualified Data.ByteString.Char8  as C
 import qualified Data.ByteString.Lazy   as Lazy

@@ -5,7 +5,7 @@
 module Tests.Data.Predicate (tests) where
 
 import Control.Applicative hiding (Const, empty)
-import Data.Predicate
+import Network.Wai.Routing.Predicate.Predicate
 import Test.QuickCheck
 import Test.Tasty
 import Test.Tasty.QuickCheck

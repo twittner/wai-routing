@@ -4,7 +4,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Network.Wai.Predicate.Parser.Shared where
+module Network.Wai.Routing.Parser.Shared where
 
 import Control.Applicative
 import Data.Attoparsec.Char8

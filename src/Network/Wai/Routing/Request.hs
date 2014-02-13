@@ -5,7 +5,7 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module Network.Wai.Predicate.Request
+module Network.Wai.Routing.Request
     ( Request
     , GetRequest (..)
     , fromWaiRequest
@@ -20,8 +20,8 @@ module Network.Wai.Predicate.Request
 import Data.ByteString (ByteString)
 import Data.CaseInsensitive (mk)
 import Data.Maybe (mapMaybe)
-import Data.Predicate
 import Network.HTTP.Types
+import Network.Wai.Routing.Predicate.Predicate
 
 import qualified Network.Wai as Wai
 

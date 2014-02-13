@@ -5,18 +5,18 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module Network.Wai.Predicate.Param
+module Network.Wai.Routing.Predicate.Param
     ( Param     (..)
     , HasParam  (..)
     ) where
 
 import Data.ByteString (ByteString)
 import Data.ByteString.From
-import Data.Predicate
-import Network.Wai.Predicate.Error
-import Network.Wai.Predicate.Capture
-import Network.Wai.Predicate.Query
-import Network.Wai.Predicate.Request
+import Network.Wai.Routing.Error
+import Network.Wai.Routing.Request
+import Network.Wai.Routing.Predicate.Capture
+import Network.Wai.Routing.Predicate.Query
+import Network.Wai.Routing.Predicate.Predicate
 
 newtype Param a = Param ByteString
 

@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeFamilies      #-}
 
-module Network.Wai.Predicate.Internal
+module Network.Wai.Routing.Internal
     ( readValues
     , rqApply
     ) where
@@ -14,11 +14,11 @@ import Data.Attoparsec (eitherResult, feed, parse)
 import Data.ByteString (ByteString)
 import Data.ByteString.From
 import Data.List (foldl')
-import Data.Predicate
 import Data.String (fromString)
 import Network.HTTP.Types
-import Network.Wai.Predicate.Error
-import Network.Wai.Predicate.Request
+import Network.Wai.Routing.Error
+import Network.Wai.Routing.Predicate.Predicate
+import Network.Wai.Routing.Request
 
 readValues :: FromByteString a => [ByteString] -> Either ByteString a
 readValues = foldl' result (Left "no parse") . map (eitherResult . parse')

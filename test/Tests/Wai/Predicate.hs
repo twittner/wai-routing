@@ -6,15 +6,14 @@
 module Tests.Wai.Predicate (tests) where
 
 import Data.ByteString (ByteString)
-import Data.Predicate
 import Network.HTTP.Types.Status
-import Network.Wai.Predicate
+import Network.Wai.Routing
 import Test.Tasty
 import Test.Tasty.HUnit
 import Tests.Wai.Util
 
 tests :: TestTree
-tests = testGroup "Snap.Predicate"
+tests = testGroup "Wai.Predicate"
     [ testCase "Accept application/json" testAcceptJson
     , testCase "Accept application/thrift " testAcceptThrift
     , testCase "Accept application/*" testAcceptAll

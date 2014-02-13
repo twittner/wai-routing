@@ -6,7 +6,7 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module Network.Wai.Predicate.Capture
+module Network.Wai.Routing.Predicate.Capture
     ( Capture    (..)
     , HasCapture (..)
     ) where
@@ -14,11 +14,11 @@ module Network.Wai.Predicate.Capture
 import Data.ByteString (ByteString)
 import Data.ByteString.From
 import Data.Monoid
-import Data.Predicate
 import Network.HTTP.Types.Status
-import Network.Wai.Predicate.Error
-import Network.Wai.Predicate.Internal
-import Network.Wai.Predicate.Request
+import Network.Wai.Routing.Error
+import Network.Wai.Routing.Internal
+import Network.Wai.Routing.Predicate.Predicate
+import Network.Wai.Routing.Request
 
 newtype Capture a = Capture ByteString
 

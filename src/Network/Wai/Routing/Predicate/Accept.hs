@@ -7,9 +7,9 @@
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE TypeFamilies          #-}
 
-module Network.Wai.Predicate.Accept
+module Network.Wai.Routing.Predicate.Accept
   ( Accept (..)
-  , module Network.Wai.Predicate.MediaType
+  , module Network.Wai.Routing.MediaType
   )
 where
 
@@ -17,15 +17,15 @@ import Control.Monad
 import Data.ByteString (ByteString)
 import Data.ByteString.Char8 (pack, unpack)
 import Data.Monoid hiding (All)
-import Data.Predicate
 import GHC.TypeLits
 import Data.Maybe
 import Network.HTTP.Types
-import Network.Wai.Predicate.Error
-import Network.Wai.Predicate.Request
-import Network.Wai.Predicate.MediaType
+import Network.Wai.Routing.Error
+import Network.Wai.Routing.Predicate.Predicate
+import Network.Wai.Routing.Request
+import Network.Wai.Routing.MediaType
 
-import qualified Network.Wai.Predicate.Parser.MediaType as M
+import qualified Network.Wai.Routing.Parser.MediaType as M
 
 -- | A 'Predicate' against the 'Request's \"Accept\" header.
 data Accept (t :: Symbol) (s :: Symbol) = Accept

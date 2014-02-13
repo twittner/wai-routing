@@ -7,24 +7,24 @@
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE TypeFamilies          #-}
 
-module Network.Wai.Predicate.Content
+module Network.Wai.Routing.Predicate.Content
     ( ContentType (..)
-    , module Network.Wai.Predicate.MediaType
+    , module Network.Wai.Routing.MediaType
     ) where
 
 import Control.Monad
 import Data.ByteString (ByteString)
 import Data.ByteString.Char8 (pack, unpack)
 import Data.Monoid hiding (All)
-import Data.Predicate
 import GHC.TypeLits
 import Data.Maybe
 import Network.HTTP.Types.Status
-import Network.Wai.Predicate.Error
-import Network.Wai.Predicate.MediaType
-import Network.Wai.Predicate.Request
+import Network.Wai.Routing.Error
+import Network.Wai.Routing.MediaType
+import Network.Wai.Routing.Predicate.Predicate
+import Network.Wai.Routing.Request
 
-import qualified Network.Wai.Predicate.Parser.MediaType as M
+import qualified Network.Wai.Routing.Parser.MediaType as M
 
 -- | A 'Predicate' against the 'Request's \"Content-Type\" header.
 data ContentType (t :: Symbol) (s :: Symbol) = ContentType

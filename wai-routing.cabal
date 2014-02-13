@@ -1,4 +1,4 @@
-name:                wai-predicates
+name:                wai-routing
 version:             0.1
 synopsis:            Declarative routing for WAI.
 license:             OtherLicense
@@ -13,14 +13,17 @@ cabal-version:       >= 1.10
 extra-source-files:  README.md
 
 description:
-    Provides the definition of a predicate type-class together
+    Provides the definition of a type-class 'Predicate' together
     with several concrete implementations which are used to
     constrain the set of possible WAI applications in a type-safe
     way.
+    .
+    For details see the tutorial at
+    <http://hackage.haskell.org/package/wai-routing/docs/Network-Wai-Routing-Tutorial.html>
 
 source-repository head
     type:             git
-    location:         git://github.com/twittner/wai-predicates.git
+    location:         git://github.com/twittner/wai-routing.git
 
 library
     default-language: Haskell2010
@@ -29,23 +32,24 @@ library
     ghc-prof-options: -prof -auto-all
 
     exposed-modules:
-        Data.Predicate
-        Network.Wai.Predicate
-        Network.Wai.Predicate.Accept
-        Network.Wai.Predicate.Content
-        Network.Wai.Predicate.Error
-        Network.Wai.Predicate.Header
-        Network.Wai.Predicate.MediaType
-        Network.Wai.Predicate.Param
-        Network.Wai.Predicate.Query
-        Network.Wai.Predicate.Request
-        Network.Wai.Predicate.Tutorial
-        Network.Wai.Route
+        Network.Wai.Routing
+        Network.Wai.Routing.Error
+        Network.Wai.Routing.MediaType
+        Network.Wai.Routing.Request
+        Network.Wai.Routing.Route
+        Network.Wai.Routing.Tutorial
+        Network.Wai.Routing.Predicate
+        Network.Wai.Routing.Predicate.Predicate
+        Network.Wai.Routing.Predicate.Accept
+        Network.Wai.Routing.Predicate.Content
+        Network.Wai.Routing.Predicate.Header
+        Network.Wai.Routing.Predicate.Param
+        Network.Wai.Routing.Predicate.Query
 
     other-modules:
-        Network.Wai.Predicate.Internal
-        Network.Wai.Predicate.Parser.MediaType
-        Network.Wai.Predicate.Parser.Shared
+        Network.Wai.Routing.Internal
+        Network.Wai.Routing.Parser.MediaType
+        Network.Wai.Routing.Parser.Shared
 
     build-depends:
         attoparsec       >= 0.10  && < 0.12
@@ -58,7 +62,7 @@ library
       , wai              == 2.0.*
       , wai-route        == 0.1.*
 
-test-suite wai-predicates-tests
+test-suite wai-routing-tests
     type:             exitcode-stdio-1.0
     default-language: Haskell2010
     hs-source-dirs:   src test

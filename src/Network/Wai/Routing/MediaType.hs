@@ -5,7 +5,7 @@
 {-# LANGUAGE DataKinds      #-}
 {-# LANGUAGE KindSignatures #-}
 
-module Network.Wai.Predicate.MediaType where
+module Network.Wai.Routing.MediaType where
 
 import Data.ByteString (ByteString)
 import Data.ByteString.Char8 (pack)

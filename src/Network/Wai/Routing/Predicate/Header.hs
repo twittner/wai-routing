@@ -6,7 +6,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies          #-}
 
-module Network.Wai.Predicate.Header
+module Network.Wai.Routing.Predicate.Header
     ( Hdr    (..)
     , HasHdr (..)
     ) where
@@ -17,11 +17,11 @@ import Data.CaseInsensitive (mk)
 import Data.List (find)
 import Data.Maybe
 import Data.Monoid
-import Data.Predicate
 import Network.HTTP.Types.Status
-import Network.Wai.Predicate.Error
-import Network.Wai.Predicate.Internal
-import Network.Wai.Predicate.Request
+import Network.Wai.Routing.Error
+import Network.Wai.Routing.Internal
+import Network.Wai.Routing.Predicate.Predicate
+import Network.Wai.Routing.Request
 
 newtype Hdr a = Hdr ByteString
 

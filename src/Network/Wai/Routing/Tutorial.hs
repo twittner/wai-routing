@@ -2,7 +2,7 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-module Network.Wai.Predicate.Tutorial
+module Network.Wai.Routing.Tutorial
   ( -- * Motivation
     -- $motivation
 
@@ -30,9 +30,9 @@ invoked if any of these pre-conditions fails.
 
 {- $introduction
 
-The @wai-predicates@ package defines a 'Data.Predicate.Boolean' type
-which carries \-\- in addition to actual truth values 'Data.Predicate.T'
-and 'Data.Predicate.F' \-\- meta-data for each case:
+The @wai-predicates@ package defines a 'Network.Wai.Routing.Predicate.Boolean' type
+which carries \-\- in addition to actual truth values 'Network.Wai.Routing.Predicate.T'
+and 'Network.Wai.Routing.Predicate.F' \-\- meta-data for each case:
 
 @
 data Boolean f t
@@ -41,16 +41,15 @@ data Boolean f t
     deriving (Eq, Show)
 @
 
-'Data.Predicate.Delta' can in most instances be ignored, i.e. set to 0.
+'Network.Wai.Routing.Predicate.Predicate.Delta' can in most instances be ignored, i.e. set to 0.
 It's purpose is as a measure of distance for those predicates which evaluate
-to 'Data.Predicate.T' but some may be \"closer\" in some way than others. An
+to @T@ but some may be \"closer\" in some way than others. An
 example is for instance HTTP content-negotiations (cf.
-'Network.Wai.Predicate.Accept.Accept')
+'Network.Wai.Routing.Predicate.Predicate.Accept.Accept')
 
-Further there is a type-class 'Data.Predicate.Predicate' defined which
-contains an evaluation function 'Data.Predicate.apply', where the
-predicate instance is applied to some value, yielding 'Data.Predicate.T'
-or 'Data.Predicate.F'.
+Further there is a type-class 'Network.Wai.Routing.Predicate.Predicate.Predicate' defined which
+contains an evaluation function 'Network.Wai.Routing.Predicate.Predicate.apply', where the
+predicate instance is applied to some value, yielding @T@ or @F@.
 
 @
 class Predicate p a where
@@ -62,39 +61,38 @@ class Predicate p a where
 All predicates are instances of this type-class, which does not
 specify the type against which the predicate is evaluated, nor the types
 of actual meta-data for the true/false case of the Boolean returned.
-WAI related predicates are defined against 'Network.Wai.Predicate.Request'
+WAI related predicates are defined against 'Network.Wai.Routing.Request'
 which holds a regular 'Network.Wai.Request' and path capture variables.
 In case predicates fail, they return a status code and an optional message.
 
 Besides these type definitions, there are some ways to connect two
-'Data.Predicate.Predicate's to form a new one as the logical @OR@ or the
+predicates to form a new one as the logical @OR@ or the
 logical @AND@ of its parts. These are:
 
-  * 'Data.Predicate.:|:' and 'Data.Predicate.:||:' as logical @OR@s
+  * 'Network.Wai.Routing.Predicate.Predicate.:|:' and 'Network.Wai.Routing.Predicate.Predicate.:||:' as logical @OR@s
 
-  * 'Data.Predicate.:&:' as logical @AND@
+  * 'Network.Wai.Routing.Predicate.Predicate.:&:' as logical @AND@
 
-In addition to evaluating to 'Data.Predicate.T' or 'Data.Predicate.F'
-depending on the truth values of its parts, these connectives also
-propagate the meta-data and 'Data.Predicate.Delta' appropriately.
+In addition to evaluating to @T@ or @F@ depending on the truth values of
+its parts, these connectives also propagate the meta-data and @Delta@
+appropriately.
 
-If 'Data.Predicate.:&:' evaluates to 'Data.Predicate.T' it has to combine
-the meta-data of both predicates, and it uses the product type
-'Data.Predicate.:::' for this. This type also has a data constructor with
-the same symbol, so one can combine many predicates without having to
-nest the meta-data pairs.
+If @:&:@ evaluates to @F@ it has to combine the meta-data of both predicates,
+and it uses the product type 'Network.Wai.Routing.Predicate.Predicate.:::' for this.
+This type also has a data constructor with the same symbol, so one can
+combine many predicates without having to nest the meta-data pairs.
 
 In the @OR@ case, the two predicates have potentially meta-data of
 different types, so we use a sum type 'Either' whenever we combine
-two predicates with 'Data.Predicate.:||:'. For convenience a type-alias
-'Data.Predicate.:+:' is defined for 'Either', which allows simple infix
+two predicates with @:||:@. For convenience a type-alias
+@:+:@ is defined for 'Either', which allows simple infix
 notation. However, for the common case where both predicates have
 meta-data of the same type, there is often no need to distinguish which
-@OR@-branch was true. In this case, the 'Data.Predicate.:|:' combinator
-can be used.
+@OR@-branch was true. In this case, the @:|:@ combinator can be used.
 
-Finally there are 'Data.Predicate.Const' and 'Data.Predicate.Fail' to
-always evaluate to 'Data.Predicate.T' or 'Data.Predicate.F' respectively.
+Finally there are 'Network.Wai.Routing.Predicate.Predicate.Const' and
+'Network.Wai.Routing.Predicate.Predicate.Fail' to always evaluate to @T@ or @F@
+respectively.
 
 As an example of how these operators are used, see below in section \"Routes\".
 -}
@@ -118,17 +116,18 @@ parameter with the given name. In the success case, the query value is
 returned.
 
 As mentioned before, WAI predicates usually fix the type @a@ from
-'Data.Predicate.Predicate' above to 'Network.Wai.Predicate.Request'. The associated
-types 'Data.Predicate.FVal' and 'Data.Predicate.TVal' denote the meta-data
-types of the predicate. In this example, the meta-date type is 'Data.ByteString.ByteString'.
-The 'Data.Predicate.F'-case is 'Snap.Predicate.Error' which contains a status
-code and an optional message.
+@Predicate@ above to 'Network.Wai.Routing.Request'. The associated
+types 'Network.Wai.Routing.Predicate.Predicate.FVal' and
+'Network.Wai.Routing.Predicate.Predicate.TVal' denote the meta-data
+types of the predicate. In this example, the meta-date type is
+'Data.ByteString.ByteString'. The @F@-case is 'Network.Wai.Routing.Error'
+which contains a status code and an optional message.
 
 -}
 
 {- $routes
 
-So how are 'Data.Predicate.Predicate's used in an application?
+So how are @Predicate@s used in an application?
 One way is to just evaluate them against a given request, e.g.
 
 @
@@ -165,10 +164,10 @@ handlerE :: Media \"application\" \"xml\" -> IO Response
 @
 
 The type-declaration of a handler has to match the corresponding predicate,
-i.e. the type of the predicate's 'Data.Predicate.T' meta-data value.
+i.e. the type of the predicate's @T@ meta-data value.
 
-One thing to note is that 'Data.Predicate.Fail' works with
-all 'Data.Predicate.T' meta-data types which is safe because the handler is never
-invoked, or 'Data.Predicate.Fail' is used in some logical disjunction.
+One thing to note is that @Fail@ works with
+all @T@ meta-data types which is safe because the handler is never
+invoked, or @Fail@ is used in some logical disjunction.
 -}
 

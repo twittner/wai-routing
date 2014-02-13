@@ -4,7 +4,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Network.Wai.Predicate.Parser.MediaType
+module Network.Wai.Routing.Parser.MediaType
     ( MediaType (..)
     , readMediaTypes
     ) where
@@ -13,8 +13,8 @@ import Control.Applicative
 import Data.Attoparsec.Char8
 import Data.ByteString (ByteString)
 import Data.List (sortBy)
-import Network.Wai.Predicate.Parser.Shared
-import Network.Wai.Predicate.Request
+import Network.Wai.Routing.Parser.Shared
+import Network.Wai.Routing.Request
 
 data MediaType = MediaType
     { medType    :: !ByteString
