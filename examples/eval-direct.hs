@@ -23,7 +23,7 @@ import Network.Wai.Middleware.RequestLogger
 import qualified Data.ByteString.Lazy as Lazy
 
 -- The operations we want to support in expressions.
-data Op = Add | Sub | Mul | Div deriving (Show)
+data Op = Add | Sub | Mul | Div
 
 instance FromByteString Op where
     parser = anyChar >>= \c -> case c of
