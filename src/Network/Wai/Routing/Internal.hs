@@ -10,7 +10,6 @@ module Network.Wai.Routing.Internal
     , rqApply
     ) where
 
-import Data.Attoparsec (eitherResult, feed, parse)
 import Data.ByteString (ByteString)
 import Data.ByteString.From
 import Data.List (foldl')
@@ -21,10 +20,8 @@ import Network.Wai.Routing.Predicate.Predicate
 import Network.Wai.Routing.Request
 
 readValues :: FromByteString a => [ByteString] -> Either ByteString a
-readValues = foldl' result (Left "no parse") . map (eitherResult . parse')
+readValues = foldl' result (Left "no parse") . map (runParser parser)
   where
-    parse' = flip feed "" . parse parser
-
     result (Left  _) (Right x) = Right x
     result (Right x) _         = Right x
     result _         (Left  x) = Left (fromString x)
