@@ -2,6 +2,7 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -11,6 +12,7 @@ module Network.Wai.Routing.Predicate.Capture
     , HasCapture (..)
     ) where
 
+import Control.Applicative
 import Data.ByteString (ByteString)
 import Data.ByteString.From
 import Data.Monoid
@@ -22,19 +24,19 @@ import Network.Wai.Routing.Request
 
 newtype Capture a = Capture ByteString
 
-instance (FromByteString a) => Predicate (Capture a) Req where
+instance (Applicative m, FromByteString a) => Predicate m (Capture a) Req where
     type FVal (Capture a) = Error
     type TVal (Capture a) = a
     apply (Capture x)     =
         let msg = "Missing path parameter '" <> x <> "'." in
-        rqApply (lookupCapture x) readValues (err status400 msg)
+        pure . rqApply (lookupCapture x) readValues (err status400 msg)
 
 newtype HasCapture = HasCapture ByteString
 
-instance Predicate HasCapture Req where
+instance Applicative m => Predicate m HasCapture Req where
     type FVal HasCapture   = Error
     type TVal HasCapture   = ()
-    apply (HasCapture x) r =
+    apply (HasCapture x) r = pure $
         if null (lookupQuery x r)
             then F (err status400 ("Missing path parameter '" <> x <> "'."))
             else T 0 ()

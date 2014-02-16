@@ -10,6 +10,7 @@
 
 module Network.Wai.Routing.Predicate.Predicate where
 
+import Control.Applicative hiding (Const)
 import Prelude hiding (and, or)
 
 -- | 'Delta' is a measure of distance. It is (optionally)
@@ -38,20 +39,20 @@ data Boolean f t
 -- Besides being parameterised over predicate type and predicate
 -- parameter, the class is also parameterised over the actual types
 -- of T's and F's meta-data.
-class Predicate p a where
+class Predicate m p a where
     type FVal p
     type TVal p
-    apply :: p -> a -> Boolean (FVal p) (TVal p)
+    apply :: p -> a -> m (Boolean (FVal p) (TVal p))
 
 -- | A 'Predicate' instance which always returns 'T' with
 -- the given value as T's meta-data.
 data Const f t where
     Const :: t -> Const f t
 
-instance Predicate (Const f t) a where
+instance Applicative m => Predicate m (Const f t) a where
     type FVal (Const f t) = f
     type TVal (Const f t) = t
-    apply (Const a) _     = T 0 a
+    apply (Const a) _     = pure $ T 0 a
 
 true :: Const a ()
 true = Const ()
@@ -61,10 +62,10 @@ true = Const ()
 data Fail f t where
     Fail :: f -> Fail f t
 
-instance Predicate (Fail f t) a where
+instance Applicative m => Predicate m (Fail f t) a where
     type FVal (Fail f t) = f
     type TVal (Fail f t) = t
-    apply (Fail a) _     = F a
+    apply (Fail a) _     = pure $ F a
 
 -- | A 'Predicate' instance corresponding to the logical
 -- OR connective of two 'Predicate's. It requires the
@@ -75,11 +76,11 @@ instance Predicate (Fail f t) a where
 -- left-hand argument.
 data a :|: b = a :|: b
 
-instance (Predicate a c, Predicate b c, TVal a ~ TVal b, FVal a ~ FVal b) => Predicate (a :|: b) c
+instance (Applicative m, Predicate m a c, Predicate m b c, TVal a ~ TVal b, FVal a ~ FVal b) => Predicate m (a :|: b) c
   where
     type FVal (a :|: b) = FVal a
     type TVal (a :|: b) = TVal a
-    apply (a :|: b) r   = apply a r `or` apply b r
+    apply (a :|: b) r   = or <$> apply a r <*> apply b r
       where
         or x@(T d0 _) y@(T d1 _) = if d1 < d0 then y else x
         or x@(T _  _)   (F    _) = x
@@ -97,11 +98,11 @@ type a :+: b = Either a b
 -- left-hand argument.
 data a :||: b = a :||: b
 
-instance (Predicate a c, Predicate b c, FVal a ~ FVal b) => Predicate (a :||: b) c
+instance (Applicative m, Predicate m a c, Predicate m b c, FVal a ~ FVal b) => Predicate m (a :||: b) c
   where
     type FVal (a :||: b) = FVal a
     type TVal (a :||: b) = TVal a :+: TVal b
-    apply (a :||: b) r   = apply a r `or` apply b r
+    apply (a :||: b) r   = or <$> apply a r <*> apply b r
       where
         or (T d0 t0) (T d1 t1) = if d1 < d0 then T d1 (Right t1) else T d0 (Left t0)
         or (T  d  t) (F     _) = T d (Left t)
@@ -115,11 +116,11 @@ data a ::: b = a ::: b deriving (Eq, Show)
 -- AND connective of two 'Predicate's.
 data a :&: b = a :&: b
 
-instance (Predicate a c, Predicate b c, FVal a ~ FVal b) => Predicate (a :&: b) c
+instance (Applicative m, Predicate m a c, Predicate m b c, FVal a ~ FVal b) => Predicate m (a :&: b) c
   where
     type FVal (a :&: b) = FVal a
     type TVal (a :&: b) = TVal a ::: TVal b
-    apply (a :&: b) r   = apply a r `and` apply b r
+    apply (a :&: b) r   = and <$> apply a r <*> apply b r
       where
         and (T d x) (T w y) = T (d + w) (x ::: y)
         and (T _ _) (F   f) = F f
@@ -130,10 +131,10 @@ instance (Predicate a c, Predicate b c, FVal a ~ FVal b) => Predicate (a :&: b) 
 -- returned.
 newtype Opt a = Opt a
 
-instance (Predicate a b) => Predicate (Opt a) b where
+instance (Functor m, Predicate m a b) => Predicate m (Opt a) b where
     type FVal (Opt a) = FVal a
     type TVal (Opt a) = Maybe (TVal a)
-    apply (Opt a) r   = case apply a r of
+    apply (Opt a) r   = flip fmap (apply a r) $ \v -> case v of
         T d x -> T d (Just x)
         F _   -> T 0 Nothing
 
@@ -141,16 +142,16 @@ instance (Predicate a b) => Predicate (Opt a) b where
 -- value if the underlying predicate fails.
 data Def d a = Def d a
 
-instance (Predicate a b, d ~ TVal a) => Predicate (Def d a) b where
+instance (Functor m, Predicate m a b, d ~ TVal a) => Predicate m (Def d a) b where
     type FVal (Def d a) = FVal a
     type TVal (Def d a) = TVal a
-    apply (Def d a) r   = case apply a r of
+    apply (Def d a) r   = flip fmap (apply a r) $ \v -> case v of
         T n x -> T n x
         F _   -> T 0 d
 
 -- | The 'with' function will invoke the given function only if the predicate 'p'
 -- applied to the test value 'a' evaluates to 'T'.
-with :: (Monad m, Predicate p a) => p -> a -> (TVal p -> m ()) -> m ()
-with p a f = case apply p a of
+with :: (Monad m, Predicate m p a) => p -> a -> (TVal p -> m ()) -> m ()
+with p a f = apply p a >>= \v -> case v of
     T _ x -> f x
     _     -> return ()

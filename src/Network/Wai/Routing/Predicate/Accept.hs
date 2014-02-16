@@ -3,16 +3,17 @@
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE TypeFamilies          #-}
 
 module Network.Wai.Routing.Predicate.Accept
-  ( Accept (..)
-  , module Network.Wai.Routing.MediaType
-  )
-where
+    ( Accept (..)
+    , module Network.Wai.Routing.MediaType
+    ) where
 
+import Control.Applicative
 import Control.Monad
 import Data.ByteString (ByteString)
 import Data.ByteString.Char8 (pack)
@@ -42,10 +43,11 @@ type2 m = withSing (f m)
     f :: Accept t s -> Sing s -> ByteString
     f _ s = pack $ fromSing s
 
-instance (SingI t, SingI s) => Predicate (Accept t s) Req where
+instance (Applicative m, SingI t, SingI s) => Predicate m (Accept t s) Req where
     type FVal (Accept t s) = Error
     type TVal (Accept t s) = Media t s
-    apply a r = let mtypes = M.readMediaTypes "accept" r in
+    apply a r = pure $
+        let mtypes = M.readMediaTypes "accept" r in
         if null mtypes
             then T 0 (Media (type1 a) (type2 a) 1.0 [])
             else case findMediaType a mtypes of

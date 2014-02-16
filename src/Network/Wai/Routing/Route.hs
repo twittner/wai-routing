@@ -57,7 +57,7 @@ data Handler m = Handler
     }
 
 data Pack m where
-    Pack :: (Predicate p Req, FVal p ~ Error)
+    Pack :: (Predicate m p Req, FVal p ~ Error)
          => p
          -> (TVal p -> m Response)
          -> Pack m
@@ -90,7 +90,7 @@ instance Monad (Routes m) where
 
 -- | Add a route for some 'Method' and path (potentially with variable
 -- captures), and constrained the some 'Predicate'.
-addRoute :: (Monad m, Predicate p Req, FVal p ~ Error)
+addRoute :: (Monad m, Predicate m p Req, FVal p ~ Error)
          => Method
          -> ByteString             -- ^ path
          -> (TVal p -> m Response) -- ^ handler
@@ -101,7 +101,7 @@ addRoute m r x p = Routes . modify $ \(St !rr !f) ->
 
 -- | Specialisation of 'addRoute' for a specific HTTP 'Method'.
 get, head, post, put, delete, trace, options, connect ::
-    (Monad m, Predicate p Req, FVal p ~ Error)
+    (Monad m, Predicate m p Req, FVal p ~ Error)
     => ByteString             -- ^ path
     -> (TVal p -> m Response) -- ^ handler
     -> p                      -- ^ 'Predicate'
@@ -177,18 +177,18 @@ select render routes req = do
     validMethods = C.intercalate "," $ nub (C.pack . show . _method <$> routes)
 
     evalAll :: Monad m => [Route m] -> m Response
-    evalAll rs =
-        let (n, y) = partitionEithers $ foldl' evalSingle [] rs
-        in if null y
+    evalAll rs = do
+        (n, y) <- partitionEithers `liftM` foldM evalSingle [] rs
+        if null y
             then return $ respond render (L.head n) []
             else closest y
 
-    evalSingle :: Monad m => [Either Error (Handler m)] -> Route m -> [Either Error (Handler m)]
+    evalSingle :: Monad m => [Either Error (Handler m)] -> Route m -> m [Either Error (Handler m)]
     evalSingle rs r =
         case _pred r of
-            Pack p h -> case apply p req of
-                F   m -> Left m : rs
-                T d v -> Right (Handler d (h v)) : rs
+            Pack p h -> apply p req >>= \x -> case x of
+                F   m -> return (Left m : rs)
+                T d v -> return (Right (Handler d (h v)) : rs)
 
     closest :: Monad m => [Handler m] -> m Response
     closest hh = case map _handler . sortBy (compare `on` _delta) $ hh of
