@@ -26,64 +26,51 @@ tests = testGroup "Wai.Predicate"
 testAcceptJson :: IO ()
 testAcceptJson = do
     let rq0 = fromWaiRequest [] . json $ request "/"
-    x0 <- apply (Accept :: Accept "application" "json") rq0
-    (T 0 $ Media "application" "json" 1.0 []) @=? x0
+    (T 0 $ Media "application" "json" 1.0 []) @=? (apply (Accept :: Accept "application" "json") rq0)
 
     let rq1 = fromWaiRequest [] . withHeader "Accept" "foo/bar" $ request "/"
-    x1 <- apply (Accept :: Accept "application" "json") rq1
-    (F (err status406 ("Expected 'Accept: application/json'."))) @=? x1
+    (F (err status406 ("Expected 'Accept: application/json'."))) @=? (apply (Accept :: Accept "application" "json") rq1)
 
 testAcceptThrift :: IO ()
 testAcceptThrift = do
     let rq0 = fromWaiRequest [] . withHeader "Accept" "application/x-thrift" $ request "/"
-    x0 <- apply (Accept :: Accept "application" "x-thrift") rq0
-    (T 0 $ Media "application" "x-thrift" 1.0 []) @=? x0
+    (T 0 $ Media "application" "x-thrift" 1.0 []) @=? (apply (Accept :: Accept "application" "x-thrift") rq0)
 
     let rq1 = fromWaiRequest [] . json $ request "/"
-    x1 <- apply (Accept :: Accept "application" "x-thrift") rq1
-    (F (err status406 ("Expected 'Accept: application/x-thrift'."))) @=? x1
+    (F (err status406 ("Expected 'Accept: application/x-thrift'."))) @=? (apply (Accept :: Accept "application" "x-thrift") rq1)
 
 testAcceptAll :: IO ()
 testAcceptAll = do
     let rq0 = fromWaiRequest [] . withHeader "Accept" "application/*" $ request "/"
-    x0 <- apply (Accept :: Accept "application" "*") rq0
-    (T 0 $ Media "application" "*"    1.0 []) @=? x0
-    x1 <- apply (Accept :: Accept "application" "json") rq0
-    (T 0 $ Media "application" "json" 1.0 []) @=? x1
+    (T 0 $ Media "application" "*"    1.0 []) @=? apply (Accept :: Accept "application" "*") rq0
+    (T 0 $ Media "application" "json" 1.0 []) @=? apply (Accept :: Accept "application" "json") rq0
 
 testContentTypePlain :: IO ()
 testContentTypePlain = do
     let rq0 = fromWaiRequest [] . withHeader "Content-Type" "text/plain" $ request "/"
-    x0 <- apply (ContentType :: ContentType "text" "plain") rq0
-    (T 0 $ Media "text" "plain" 1.0 []) @=? x0
+    (T 0 $ Media "text" "plain" 1.0 []) @=? (apply (ContentType :: ContentType "text" "plain") rq0)
 
     let rq1 = fromWaiRequest [] . withHeader "Content-Type" "text/html" $ request "/"
-    x1 <- apply (ContentType :: ContentType "text" "plain") rq1
-    (F (err status415 ("Expected 'Content-Type: text/plain'."))) @=? x1
+    (F (err status415 ("Expected 'Content-Type: text/plain'."))) @=? (apply (ContentType :: ContentType "text" "plain") rq1)
 
 testContentTypeAll :: IO ()
 testContentTypeAll = do
     let rq0 = fromWaiRequest [] . withHeader "Content-Type" "text/plain" $ request "/"
-    x0 <- apply (ContentType :: ContentType "text" "*") rq0
-    (T 0.5 $ Media "text" "plain" 0.5 []) @=? x0
+    (T 0.5 $ Media "text" "plain" 0.5 []) @=? (apply (ContentType :: ContentType "text" "*") rq0)
 
 testQuery :: IO ()
 testQuery = do
     let rq0 = fromWaiRequest [] . withQuery "x" "y" . withQuery "x" "z" $ request "/"
-    x0 <- apply (Query "x" :: Query ByteString) rq0
-    (T 0 "y") @=? x0
+    (T 0 "y") @=? (apply (Query "x" :: Query ByteString) rq0)
 
     let rq1 = fromWaiRequest [] $ request "/"
-    x1 <- apply (Query "x" :: Query ByteString) rq1
-    (F (err status400 ("Missing query 'x'."))) @=? x1
+    (F (err status400 ("Missing query 'x'."))) @=? (apply (Query "x" :: Query ByteString) rq1)
 
 testQueryOpt :: IO ()
 testQueryOpt = do
     let rq0 = fromWaiRequest [] . withQuery "x" "y" . withQuery "x" "z" $ request "/"
-    x0 <- apply (Opt (Query "x" :: Query ByteString)) rq0
-    (T 0 (Just "y")) @=? x0
+    (T 0 (Just "y")) @=? (apply (Opt (Query "x" :: Query ByteString)) rq0)
 
     let rq1 = fromWaiRequest [] $ request "/"
-    x1 <- apply (Opt (Query "x" :: Query ByteString)) rq1
-    (T 0 Nothing) @=? x1
+    (T 0 Nothing) @=? (apply (Opt (Query "x" :: Query ByteString)) rq1)
 

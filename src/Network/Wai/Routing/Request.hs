@@ -2,7 +2,6 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
@@ -18,7 +17,6 @@ module Network.Wai.Routing.Request
     , lookupQuery
     ) where
 
-import Control.Applicative
 import Data.ByteString (ByteString)
 import Data.CaseInsensitive (mk)
 import Data.Maybe (mapMaybe)
@@ -35,10 +33,10 @@ data Req = Req
 
 data GetRequest a = GetRequest
 
-instance Applicative m => Predicate m (GetRequest a) Req where
+instance Predicate (GetRequest a) Req where
     type FVal (GetRequest a) = a
     type TVal (GetRequest a) = Request
-    apply GetRequest r       = pure $ T 0 (request r)
+    apply GetRequest r       = T 0 (request r)
 
 fromWaiRequest :: [(ByteString, ByteString)] -> Request -> Req
 fromWaiRequest = Req

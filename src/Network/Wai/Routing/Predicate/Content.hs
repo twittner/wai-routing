@@ -3,7 +3,6 @@
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE TypeFamilies          #-}
@@ -13,7 +12,6 @@ module Network.Wai.Routing.Predicate.Content
     , module Network.Wai.Routing.MediaType
     ) where
 
-import Control.Applicative
 import Control.Monad
 import Data.ByteString (ByteString)
 import Data.ByteString.Char8 (pack)
@@ -43,11 +41,10 @@ type2 m = withSing (f m)
     f :: ContentType t s -> Sing s -> ByteString
     f _ s = pack $ fromSing s
 
-instance (Applicative m, SingI t, SingI s) => Predicate m (ContentType t s) Req where
+instance (SingI t, SingI s) => Predicate (ContentType t s) Req where
     type FVal (ContentType t s) = Error
     type TVal (ContentType t s) = Media t s
-    apply c r = pure $
-        let mtypes = M.readMediaTypes "content-type" r in
+    apply c r = let mtypes = M.readMediaTypes "content-type" r in
         case findContentType c mtypes of
             m:_ -> T (1.0 - mediaQuality m) m
             []  -> F (err status415 msg)
