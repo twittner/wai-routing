@@ -6,6 +6,8 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
+-- | A wrapped WAI 'Request' which holds additional data of interest
+-- only to 'Predicate' authors.
 module Network.Wai.Routing.Request
     ( Req
     , GetRequest (..)
@@ -35,6 +37,9 @@ data Req = Req
     , cookies  :: Cookies
     }
 
+-- | A 'Predicate' which just returns the WAI 'Wai.Request'.
+-- By including this predicate, handlers have easy access to
+-- the complete request.
 data GetRequest a = GetRequest
 
 instance Predicate (GetRequest a) Req where

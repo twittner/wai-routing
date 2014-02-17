@@ -19,35 +19,34 @@ where
 
 {- $motivation
 
-The purpose of the @wai-predicates@ package is to facilitate the
+The purpose of the @wai-routing@ package is to facilitate the
 convenient definition of safe WAI 'Application's. Here safety
 means that a handler can declare all pre-conditions which must be
-fulfilled such that the handler can produce a successful response.
-It is then statically guaranteed that the handler will not be
+fulfilled such that the handler can produce a successful response (excluding
+the request body). It is then statically guaranteed that the handler will not be
 invoked if any of these pre-conditions fails.
 
 -}
 
 {- $introduction
 
-The @wai-predicates@ package defines a 'Network.Wai.Routing.Predicate.Boolean' type
-which carries \-\- in addition to actual truth values 'Network.Wai.Routing.Predicate.T'
-and 'Network.Wai.Routing.Predicate.F' \-\- meta-data for each case:
+The @wai-routing@ package defines a 'Network.Wai.Routing.Predicate.Predicate.Boolean' type
+which carries \-\- in addition to actual truth values @T@ and @F@ \-\- meta-data for each case:
 
 @
 data Boolean f t
-    = F (Maybe f)
+    = F f
     | T Delta t
     deriving (Eq, Show)
 @
 
 'Network.Wai.Routing.Predicate.Predicate.Delta' can in most instances be ignored, i.e. set to 0.
-It's purpose is as a measure of distance for those predicates which evaluate
+Its purpose is as a measure of distance for those predicates which evaluate
 to @T@ but some may be \"closer\" in some way than others. An
 example is for instance HTTP content-negotiations (cf.
-'Network.Wai.Routing.Predicate.Predicate.Accept.Accept')
+'Network.Wai.Routing.Predicate.Accept.Accept')
 
-Further there is a type-class 'Network.Wai.Routing.Predicate.Predicate.Predicate' defined which
+In addition there is a type-class 'Network.Wai.Routing.Predicate.Predicate.Predicate' defined which
 contains an evaluation function 'Network.Wai.Routing.Predicate.Predicate.apply', where the
 predicate instance is applied to some value, yielding @T@ or @F@.
 
@@ -120,7 +119,7 @@ As mentioned before, WAI predicates usually fix the type @a@ from
 types 'Network.Wai.Routing.Predicate.Predicate.FVal' and
 'Network.Wai.Routing.Predicate.Predicate.TVal' denote the meta-data
 types of the predicate. In this example, the meta-date type is
-'Data.ByteString.ByteString'. The @F@-case is 'Network.Wai.Routing.Error'
+'Data.ByteString.ByteString'. The @F@-case is 'Network.Wai.Routing.Error.Error'
 which contains a status code and an optional message.
 
 -}
@@ -133,15 +132,19 @@ One way is to just evaluate them against a given request, e.g.
 @
 someHandler :: Application
 someHandler r =
-    case apply (Accept :&: Query \"baz\") r of
+    case apply (Accept :&: Query \"baz\") (fromWaiRequest [] r) of
         T ((_ :: Media \"text\" \"plain\") ::: bazValue) -> ...
         F (Just (Error st msg))                      -> ...
         F Nothing                                    -> ...
 @
 
-However another possibility is to declare route definitions with the
-'Network.Wai.Route' which then routes requests to handler using the library
-'wai-routes'.
+This however requires the manual construction of a 'Network.Wai.Routing.Request.Req' and
+for brevity we did not provide the list of captured path parameters.
+The intended application of @wai-routing@ is to declare route definitions with the
+'Network.Wai.Routing.Route.Routes' monad which can be turned into a WAI @Application@
+generalised from IO to arbitrary @Monad@s through 'Network.Wai.Routing.Route.route'.
+This application will at runtime select the actual handler to invoke (using the @wai-route@
+library).
 
 @
 sitemap :: Routes ()
@@ -153,7 +156,7 @@ sitemap = do
     post \"\/e\" handlerE $ Accept
 @
 
-The handlers then encode their pre-conditions in their type-signature:
+Handler definitions encode their pre-conditions in their type-signature:
 
 @
 handlerA :: Media \"application\" \"json\" ::: ByteString ::: ByteString -> IO Response

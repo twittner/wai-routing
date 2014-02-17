@@ -18,6 +18,7 @@ import Network.Wai.Routing.Predicate.Capture
 import Network.Wai.Routing.Predicate.Query
 import Network.Wai.Routing.Predicate.Predicate
 
+-- | @Param \"x\"@ is equivalent to @'Query' \"x\" ':|:' 'Capture' \"x\"@.
 newtype Param a = Param ByteString
 
 instance (FromByteString a) => Predicate (Param a) Req where

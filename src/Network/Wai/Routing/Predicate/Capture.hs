@@ -6,6 +6,18 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
+-- | Predicates against path parameters.
+-- When declaring routes, paths may contain \"variables\" which
+-- capture whatever is given at that position by an actual request.
+-- For example:
+--
+-- @
+-- get \"\/user\/:name\/address\/:street\" handler $
+--     Capture \"name\" :&: Capture \"street\"
+-- @
+--
+-- extracts from a request path whatever is given for @:name@
+-- and @:street@.
 module Network.Wai.Routing.Predicate.Capture
     ( Capture    (..)
     , HasCapture (..)

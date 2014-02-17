@@ -16,13 +16,21 @@ extra-source-files:
     examples/*.hs
 
 description:
-    Provides the definition of a type-class 'Predicate' together
-    with several concrete implementations which are used to
-    constrain the set of possible WAI applications in a type-safe
-    way.
+    Enables the declaration of \"routes\" which handle requests to a
+    specific URL.
     .
-    For details have a look ate the haddock documentation of
-    @Network.Wai.Routing.Tutorial@.
+    The set of possible handlers can be restricted by \"predicates\",
+    which operate on WAI requests and have to be true or else the
+    handler will not be called.
+    .
+    For details have a look at the haddock documentation of
+    @Network.Wai.Routing.Tutorial@ or the @examples@ folder in the
+    source distribution.
+    .
+    This library is a port of @snap-predicates@ which provides
+    similar functionality for the snap-framework.
+    .
+    The routing tree construction is implemented using @wai-route@.
 
 source-repository head
     type:             git

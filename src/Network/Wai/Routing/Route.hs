@@ -10,6 +10,7 @@
 
 module Network.Wai.Routing.Route
     ( Routes
+    , Renderer
     , route
     , expand
     , renderer
@@ -63,8 +64,13 @@ data Pack m where
          -> Pack m
 
 -- | Function to turn an 'Error' value into a 'Lazy.ByteString'.
--- Clients can provide their own renderer using 'renderErrorWith'.
+-- Clients can provide their own renderer using 'renderer'.
 type Renderer = Error -> Maybe Lazy.ByteString
+
+-- | Set a custom render function, i.e. a function to turn 'Error's into
+-- 'Lazy.ByteString's.
+renderer :: Renderer -> Routes m ()
+renderer f = Routes . modify $ \(St !rr _) -> St rr f
 
 -- | The Routes monad state type.
 data St m = St [Route m] Renderer
@@ -89,7 +95,7 @@ instance Monad (Routes m) where
     m >>= f = Routes $ _unroutes m >>= _unroutes . f
 
 -- | Add a route for some 'Method' and path (potentially with variable
--- captures), and constrained the some 'Predicate'.
+-- captures) and constrained by some 'Predicate'.
 addRoute :: (Monad m, Predicate p Req, FVal p ~ Error)
          => Method
          -> ByteString             -- ^ path
@@ -115,11 +121,8 @@ trace   = addRoute (renderStdMethod TRACE)
 options = addRoute (renderStdMethod OPTIONS)
 connect = addRoute (renderStdMethod CONNECT)
 
-renderer :: Renderer -> Routes m ()
-renderer f = Routes . modify $ \(St !rr _) -> St rr f
-
--- | A WAI 'Application' which routes requests to handlers based on
--- predicated route declarations.
+-- | A WAI 'Application' (generalised from 'IO' to 'Monad') which
+-- routes requests to handlers based on predicated route declarations.
 route :: Monad m => Routes m a -> Request -> m Response
 route rm rq = do
     let tr = Tree.fromList $ expand rm
@@ -129,6 +132,7 @@ route rm rq = do
   where
     notFound = responseLBS status404 [] ""
 
+-- | Run the 'Routes' monad and return the handlers per path.
 expand :: Monad m => Routes m a -> [(ByteString, Req -> m Response)]
 expand (Routes routes) =
     let St rr f = execState routes zero in
