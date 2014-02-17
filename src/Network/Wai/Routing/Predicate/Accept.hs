@@ -8,10 +8,9 @@
 {-# LANGUAGE TypeFamilies          #-}
 
 module Network.Wai.Routing.Predicate.Accept
-  ( Accept (..)
-  , module Network.Wai.Routing.MediaType
-  )
-where
+    ( Accept (..)
+    , module Network.Wai.Routing.MediaType
+    ) where
 
 import Control.Monad
 import Data.ByteString (ByteString)

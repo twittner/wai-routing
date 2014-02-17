@@ -46,6 +46,7 @@ library
         Network.Wai.Routing.Predicate.Accept
         Network.Wai.Routing.Predicate.Capture
         Network.Wai.Routing.Predicate.Content
+        Network.Wai.Routing.Predicate.Cookie
         Network.Wai.Routing.Predicate.Header
         Network.Wai.Routing.Predicate.Param
         Network.Wai.Routing.Predicate.Query
@@ -60,6 +61,7 @@ library
       , base             == 4.*
       , bytestring       >= 0.9   && < 0.11
       , bytestring-from  == 0.1.*
+      , cookie           == 0.4.*
       , case-insensitive == 1.1.*
       , http-types       == 0.8.*
       , transformers     == 0.3.*

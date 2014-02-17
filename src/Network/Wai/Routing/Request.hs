@@ -2,6 +2,7 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
@@ -15,6 +16,7 @@ module Network.Wai.Routing.Request
     , lookupHeader
     , lookupCapture
     , lookupQuery
+    , lookupCookie
     ) where
 
 import Data.ByteString (ByteString)
@@ -23,12 +25,14 @@ import Data.Maybe (mapMaybe)
 import Network.HTTP.Types
 import Network.Wai (Request)
 import Network.Wai.Routing.Predicate.Predicate
+import Web.Cookie
 
 import qualified Network.Wai as Wai
 
 data Req = Req
     { captures :: [(ByteString, ByteString)]
     , request  :: Request
+    , cookies  :: Cookies
     }
 
 data GetRequest a = GetRequest
@@ -39,7 +43,8 @@ instance Predicate (GetRequest a) Req where
     apply GetRequest r       = T 0 (request r)
 
 fromWaiRequest :: [(ByteString, ByteString)] -> Request -> Req
-fromWaiRequest = Req
+fromWaiRequest ca rq =
+    Req ca rq (concatMap parseCookies (getHeaders "Cookie" rq))
 
 waiRequest :: Req -> Request
 waiRequest = request
@@ -51,16 +56,20 @@ method :: Req -> Method
 method = Wai.requestMethod . request
 
 lookupHeader :: ByteString -> Req -> [ByteString]
-lookupHeader name = map snd
-                  . filter ((mk name ==) . fst)
-                  . Wai.requestHeaders
-                  . request
+lookupHeader name = getHeaders name . request
 
 lookupCapture :: ByteString -> Req -> [ByteString]
 lookupCapture name = map snd . filter ((name ==) . fst) . captures
+
+lookupCookie :: ByteString -> Req -> [ByteString]
+lookupCookie name = map snd . filter ((name ==) . fst) . cookies
 
 lookupQuery :: ByteString -> Req -> [ByteString]
 lookupQuery name = mapMaybe snd
                  . filter ((name ==) . fst)
                  . Wai.queryString
                  . request
+
+getHeaders :: ByteString -> Wai.Request -> [ByteString]
+getHeaders name = map snd . filter ((mk name ==) . fst) . Wai.requestHeaders
+

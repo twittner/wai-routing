@@ -5,6 +5,7 @@
 module Tests.Wai.Route (tests) where
 
 import Data.ByteString (ByteString)
+import Data.Monoid
 import Data.String
 import Network.HTTP.Types
 import Network.Wai
@@ -26,7 +27,7 @@ testSitemap :: IO ()
 testSitemap = do
     let routes  = expand sitemap
     assertEqual "Endpoints"
-        ["/a", "/b", "/c", "/d", "/e", "/f", "/g"]
+        ["/a", "/b", "/c", "/d", "/e", "/f", "/g", "/h"]
         (map fst routes)
 
     let handler = route sitemap
@@ -36,6 +37,7 @@ testSitemap = do
     testEndpointD handler
     testEndpointE handler
     testEndpointF handler
+    testEndpointH handler
 
 sitemap :: Routes IO ()
 sitemap = do
@@ -59,6 +61,9 @@ sitemap = do
 
     get "/g" handlerG true
 
+    get "/h" handlerH $
+        Cookie "user" :&: Cookie "age"
+
 handlerA :: Media "application" "json" ::: Int ::: ByteString -> IO Response
 handlerA (_ ::: i ::: _) = writeText (fromString . show $ i)
 
@@ -79,6 +84,10 @@ handlerF foo = writeText (fromString . show . sum $ foo)
 
 handlerG :: () -> IO Response
 handlerG = const $ writeText "all good"
+
+handlerH :: Lazy.ByteString ::: Int -> IO Response
+handlerH (user ::: age) = writeText $
+    "user = " <> user <> ", age = " <> fromString (show age)
 
 testEndpointA :: Application -> Assertion
 testEndpointA f = do
@@ -172,6 +181,22 @@ testEndpointF f = do
     status200 @=? responseStatus rs0
     "10"      @=? responseBody rs0
 
+
+testEndpointH :: Application -> Assertion
+testEndpointH f = do
+    let rq = defaultRequest { rawPathInfo = "/h" }
+
+    rs0 <- f rq
+    status400 @=? responseStatus rs0
+    "Missing cookie 'user'." @=? responseBody rs0
+
+    rs1 <- f . withHeader "Cookie" "user=joe" $ rq
+    status400 @=? responseStatus rs1
+    "Missing cookie 'age'." @=? responseBody rs1
+
+    rs2 <- f . withHeader "Cookie" "user=joe; age=42" $ rq
+    status200 @=? responseStatus rs2
+    "user = joe, age = 42" @=? responseBody rs2
 
 -----------------------------------------------------------------------------
 -- Media Selection Tests
