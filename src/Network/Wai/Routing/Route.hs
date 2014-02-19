@@ -2,7 +2,6 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE BangPatterns      #-}
 {-# LANGUAGE GADTs             #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators     #-}
@@ -12,7 +11,7 @@ module Network.Wai.Routing.Route
     ( Routes
     , Renderer
     , route
-    , expand
+    , prepare
     , renderer
     , addRoute
     , get
@@ -23,6 +22,8 @@ module Network.Wai.Routing.Route
     , trace
     , options
     , connect
+    , attach
+    , examine
     ) where
 
 import Control.Applicative hiding (Const)
@@ -33,7 +34,7 @@ import Data.CaseInsensitive (mk)
 import Data.Either
 import Data.Function
 import Data.List hiding (head, delete)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, mapMaybe)
 import Data.Monoid
 import Network.HTTP.Types
 import Network.Wai (Request, Response, responseLBS, responseBuilder, rawPathInfo)
@@ -46,9 +47,10 @@ import qualified Data.ByteString.Lazy   as Lazy
 import qualified Data.List              as L
 import qualified Network.Wai.Route.Tree as Tree
 
-data Route m = Route
+data Route m a = Route
     { _method  :: !Method
     , _path    :: !ByteString
+    , _meta    :: Maybe a
     , _pred    :: Pack m
     }
 
@@ -69,28 +71,31 @@ type Renderer = Error -> Maybe Lazy.ByteString
 
 -- | Set a custom render function, i.e. a function to turn 'Error's into
 -- 'Lazy.ByteString's.
-renderer :: Renderer -> Routes m ()
-renderer f = Routes . modify $ \(St !rr _) -> St rr f
+renderer :: Renderer -> Routes m a ()
+renderer f = Routes . modify $ \s -> s { renderfn = f }
 
 -- | The Routes monad state type.
-data St m = St [Route m] Renderer
+data St m a = St
+    { routes   :: [Route m a]
+    , renderfn :: Renderer
+    }
 
 -- | Initial state.
-zero :: St m
+zero :: St m a
 zero = St [] (fmap Lazy.fromStrict . message)
 
 -- | The Routes monad is used to add routing declarations
 -- via 'addRoute' or one of 'get', 'post', etc.
-newtype Routes m a = Routes { _unroutes :: State (St m) a }
+newtype Routes m a b = Routes { _unroutes :: State (St m a) b }
 
-instance Functor (Routes m) where
+instance Functor (Routes m a) where
     fmap = liftM
 
-instance Applicative (Routes m) where
+instance Applicative (Routes m a) where
     pure  = return
     (<*>) = ap
 
-instance Monad (Routes m) where
+instance Monad (Routes m a) where
     return  = Routes . return
     m >>= f = Routes $ _unroutes m >>= _unroutes . f
 
@@ -101,9 +106,9 @@ addRoute :: (Monad m, Predicate p Req, FVal p ~ Error)
          -> ByteString             -- ^ path
          -> (TVal p -> m Response) -- ^ handler
          -> p                      -- ^ 'Predicate'
-         -> Routes m ()
-addRoute m r x p = Routes . modify $ \(St !rr !f) ->
-    St (Route m r (Pack p x) : rr) f
+         -> Routes m a ()
+addRoute m r x p = Routes . modify $ \s ->
+    s { routes = Route m r Nothing (Pack p x) : routes s }
 
 -- | Specialisation of 'addRoute' for a specific HTTP 'Method'.
 get, head, post, put, delete, trace, options, connect ::
@@ -111,7 +116,7 @@ get, head, post, put, delete, trace, options, connect ::
     => ByteString             -- ^ path
     -> (TVal p -> m Response) -- ^ handler
     -> p                      -- ^ 'Predicate'
-    -> Routes m ()
+    -> Routes m a ()
 get     = addRoute (renderStdMethod GET)
 head    = addRoute (renderStdMethod HEAD)
 post    = addRoute (renderStdMethod POST)
@@ -121,11 +126,23 @@ trace   = addRoute (renderStdMethod TRACE)
 options = addRoute (renderStdMethod OPTIONS)
 connect = addRoute (renderStdMethod CONNECT)
 
+-- | Add some metadata to the last route.
+attach :: a -> Routes m a ()
+attach a = Routes $ modify addToLast
+  where
+    addToLast s@(St []   _) = s
+    addToLast (St (r:rr) f) = St (r { _meta = Just a } : rr) f
+
+-- | Get back all attached metadata.
+examine :: Routes m a b -> [a]
+examine (Routes r) = let St rr _ = execState r zero in
+    mapMaybe _meta rr
+
 -- | A WAI 'Application' (generalised from 'IO' to 'Monad') which
 -- routes requests to handlers based on predicated route declarations.
-route :: Monad m => Routes m a -> Request -> m Response
+route :: Monad m => [(ByteString, Req -> m Response)] -> Request -> m Response
 route rm rq = do
-    let tr = Tree.fromList $ expand rm
+    let tr = Tree.fromList rm
     case Tree.lookup tr (Tree.segments $ rawPathInfo rq) of
         Just (f, v) -> f (fromWaiRequest v rq)
         Nothing     -> return notFound
@@ -133,26 +150,26 @@ route rm rq = do
     notFound = responseLBS status404 [] ""
 
 -- | Run the 'Routes' monad and return the handlers per path.
-expand :: Monad m => Routes m a -> [(ByteString, Req -> m Response)]
-expand (Routes routes) =
-    let St rr f = execState routes zero in
-    map (\g -> (_path (L.head g), select f g)) (normalise rr)
+prepare :: Monad m => Routes m a b -> [(ByteString, Req -> m Response)]
+prepare (Routes rr) =
+    let s = execState rr zero in
+    map (\g -> (_path (L.head g), select (renderfn s) g)) (normalise (routes s))
 
 -- | Group routes by path.
-normalise :: [Route m] -> [[Route m]]
+normalise :: [Route m a] -> [[Route m a]]
 normalise rr =
     let rg    = grouped . sorted $ rr
         paths = map (namelessPath . L.head) rg
         ambig = paths \\ nub paths
     in if null ambig then rg else error (ambiguityMessage ambig)
   where
-    sorted :: [Route m] -> [Route m]
+    sorted :: [Route m a] -> [Route m a]
     sorted = sortBy (compare `on` _path)
 
-    grouped :: [Route m] -> [[Route m]]
+    grouped :: [Route m a] -> [[Route m a]]
     grouped = groupBy ((==) `on` _path)
 
-    namelessPath :: Route m -> ByteString
+    namelessPath :: Route m a -> ByteString
     namelessPath =
         let fun s = if s /= "" && C.head s == ':' then "<>" else s
         in C.intercalate "/" . map fun . C.split '/' . _path
@@ -167,9 +184,9 @@ normalise rr =
 -- (2) Evaluate 'Route' predicates.
 -- (3) Pick the first one which is 'Good', or else respond with status
 --     and message of the first one.
-select :: Monad m => Renderer -> [Route m] -> Req -> m Response
-select render routes req = do
-    let ms = filter ((method req ==) . _method) routes
+select :: Monad m => Renderer -> [Route m a] -> Req -> m Response
+select render rr req = do
+    let ms = filter ((method req ==) . _method) rr
     if null ms
         then return $ respond render (Error status405 Nothing) [(allow, validMethods)]
         else evalAll ms
@@ -178,16 +195,16 @@ select render routes req = do
     allow = mk "Allow"
 
     validMethods :: ByteString
-    validMethods = C.intercalate "," $ nub (C.pack . show . _method <$> routes)
+    validMethods = C.intercalate "," $ nub (C.pack . show . _method <$> rr)
 
-    evalAll :: Monad m => [Route m] -> m Response
+    evalAll :: Monad m => [Route m a] -> m Response
     evalAll rs =
         let (n, y) = partitionEithers $ foldl' evalSingle [] rs
         in if null y
             then return $ respond render (L.head n) []
             else closest y
 
-    evalSingle :: Monad m => [Either Error (Handler m)] -> Route m -> [Either Error (Handler m)]
+    evalSingle :: Monad m => [Either Error (Handler m)] -> Route m a -> [Either Error (Handler m)]
     evalSingle rs r =
         case _pred r of
             Pack p h -> case apply p req of
