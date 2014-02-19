@@ -39,7 +39,7 @@ testSitemap = do
     testEndpointF handler
     testEndpointH handler
 
-sitemap :: Routes IO Int ()
+sitemap :: Routes Int IO ()
 sitemap = do
     get "/a" handlerA $
         Accept :&: (Query "name" :|: Query "nick") :&: Query "foo"
@@ -223,7 +223,7 @@ testMedia = do
     expectMedia "application/json;q=0.3, application/x-thrift;q=0.7" "application/x-thrift" h
     expectMedia "application/json;q=0.7, application/x-thrift;q=0.3" "application/json" h
 
-sitemapMedia :: Routes IO a ()
+sitemapMedia :: Routes a IO ()
 sitemapMedia = do
     get "/media" handlerJson   Accept
     get "/media" handlerThrift Accept

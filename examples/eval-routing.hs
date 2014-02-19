@@ -30,7 +30,7 @@ instance FromByteString Op where
 main :: IO ()
 main = run 8080 $ logStdout (route (prepare start))
 
-start :: Monad m => Routes m a ()
+start :: Monad m => Routes a m ()
 start = get "eval" eval (Query "x" :&: Query "y" :&: Query "f")
 
 eval :: Monad m => Int ::: Int ::: Op -> m Response

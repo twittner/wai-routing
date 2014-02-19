@@ -27,7 +27,7 @@ import Network.Wai.Handler.Warp
 main :: IO ()
 main = run 8080 (route (prepare start))
 
-start :: Monad m => Routes m a ()
+start :: Monad m => Routes a m ()
 start = do
     get "/user/:name" fetchUser $
         Capture "name"
