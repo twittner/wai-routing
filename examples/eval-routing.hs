@@ -31,7 +31,7 @@ main :: IO ()
 main = run 8080 $ logStdout (route (prepare start))
 
 start :: Monad m => Routes a m ()
-start = get "eval" eval (Query "x" :&: Query "y" :&: Query "f")
+start = get "eval" eval (query "x" :&: query "y" :&: query "f")
 
 eval :: Monad m => Int ::: Int ::: Op -> m Response
 eval (x ::: y ::: f) = respond status200 . fromString . show $

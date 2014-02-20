@@ -132,7 +132,7 @@ One way is to just evaluate them against a given request, e.g.
 @
 someHandler :: Application
 someHandler r =
-    case apply (Accept :&: Query \"baz\") (fromWaiRequest [] r) of
+    case apply (accept :&: query \"baz\") (fromWaiRequest [] r) of
         T ((_ :: Media \"text\" \"plain\") ::: bazValue) -> ...
         F (Just (Error st msg))                      -> ...
         F Nothing                                    -> ...
@@ -149,11 +149,11 @@ library).
 @
 sitemap :: Routes ()
 sitemap = do
-    get  \"\/a\" handlerA $ Accept :&: (Query \"name\" :|: Query \"nick\") :&: Query \"foo\"
-    get  \"\/b\" handlerB $ Accept :&: (Query \"name\" :||: Query \"nick\") :&: Query \"foo\"
-    get  \"\/c\" handlerC $ Fail (Error 410 (Just \"Gone.\"))
-    post \"\/d\" handlerD $ Accept
-    post \"\/e\" handlerE $ Accept
+    get  \"\/a\" handlerA $ accept :&: (query \"name\" :|: query \"nick\") :&: query \"foo\"
+    get  \"\/b\" handlerB $ accept :&: (query \"name\" :||: query \"nick\") :&: query \"foo\"
+    get  \"\/c\" handlerC $ failure (Error 410 (Just \"Gone.\"))
+    post \"\/d\" handlerD $ accept
+    post \"\/e\" handlerE $ accept
 @
 
 Handler definitions encode their pre-conditions in their type-signature:
