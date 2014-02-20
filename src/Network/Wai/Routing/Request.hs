@@ -10,7 +10,8 @@
 -- only to 'Predicate' authors.
 module Network.Wai.Routing.Request
     ( Req
-    , GetRequest (..)
+    , GetRequest
+    , getRequest
     , fromWaiRequest
     , waiRequest
     , method
@@ -41,6 +42,10 @@ data Req = Req
 -- By including this predicate, handlers have easy access to
 -- the complete request.
 data GetRequest a = GetRequest
+
+getRequest :: GetRequest a
+getRequest = GetRequest
+{-# INLINABLE getRequest #-}
 
 instance Predicate (GetRequest a) Req where
     type FVal (GetRequest a) = a
