@@ -42,32 +42,32 @@ testSitemap = do
 sitemap :: Routes Int IO ()
 sitemap = do
     get "/a" handlerA $
-        Accept :&: (Query "name" :|: Query "nick") :&: Query "foo"
+        accept :&: (query "name" :|: query "nick") :&: query "foo"
 
     attach 0
 
     get "/b" handlerB $
-        Query "baz"
+        query "baz"
 
     attach 1
 
     get "/c" handlerC $
-        Opt (Query "foo")
+        opt (query "foo")
 
     attach 2
 
     get "/d" handlerD $
-        Def 0 (Query "foo")
+        def 0 (query "foo")
 
     attach 3
 
     get "/e" handlerE $
-        Def 0 (Hdr "foo")
+        def 0 (hdr "foo")
 
     attach 4
 
     get "/f" handlerF $
-        Query "foo"
+        query "foo"
 
     attach 5
 
@@ -76,7 +76,7 @@ sitemap = do
     attach 6
 
     get "/h" handlerH $
-        Cookie "user" :&: Cookie "age"
+        cookie "user" :&: cookie "age"
 
     attach 7
 
@@ -225,8 +225,8 @@ testMedia = do
 
 sitemapMedia :: Routes a IO ()
 sitemapMedia = do
-    get "/media" handlerJson   Accept
-    get "/media" handlerThrift Accept
+    get "/media" handlerJson   accept
+    get "/media" handlerThrift accept
 
 handlerJson :: Media "application" "json" -> IO Response
 handlerJson _ = writeText "application/json"

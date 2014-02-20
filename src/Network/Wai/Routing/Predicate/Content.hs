@@ -8,7 +8,8 @@
 {-# LANGUAGE TypeFamilies          #-}
 
 module Network.Wai.Routing.Predicate.Content
-    ( ContentType (..)
+    ( ContentType
+    , contentType
     , module Network.Wai.Routing.MediaType
     ) where
 
@@ -28,6 +29,10 @@ import qualified Network.Wai.Routing.Parser.MediaType as M
 
 -- | A 'Predicate' against the 'Request's \"Content-Type\" header.
 data ContentType (t :: Symbol) (s :: Symbol) = ContentType
+
+contentType :: ContentType t s
+contentType = ContentType
+{-# INLINABLE contentType #-}
 
 type1 :: SingI t => ContentType t s -> ByteString
 type1 m = withSing (f m)

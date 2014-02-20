@@ -7,8 +7,10 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module Network.Wai.Routing.Predicate.Cookie
-    ( Cookie    (..)
-    , HasCookie (..)
+    ( Cookie
+    , HasCookie
+    , cookie
+    , hasCookie
     ) where
 
 import Data.ByteString (ByteString)
@@ -22,6 +24,10 @@ import Network.Wai.Routing.Request
 
 newtype Cookie a = Cookie ByteString
 
+cookie :: ByteString -> Cookie a
+cookie = Cookie
+{-# INLINABLE cookie #-}
+
 instance (FromByteString a) => Predicate (Cookie a) Req where
     type FVal (Cookie a) = Error
     type TVal (Cookie a) = a
@@ -29,6 +35,10 @@ instance (FromByteString a) => Predicate (Cookie a) Req where
         rqApply (lookupCookie x) readValues (err status400 (msg x))
 
 newtype HasCookie = HasCookie ByteString
+
+hasCookie :: ByteString -> HasCookie
+hasCookie = HasCookie
+{-# INLINABLE hasCookie #-}
 
 instance Predicate HasCookie Req where
     type FVal HasCookie   = Error
