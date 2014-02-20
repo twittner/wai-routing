@@ -1,4 +1,5 @@
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeOperators     #-}
 
 -- Like "direct.hs" but makes use of wai-routing.
 
@@ -27,10 +28,10 @@ instance FromByteString Op where
         _   -> fail $ "Invalid operation: " ++ show c
 
 main :: IO ()
-main = run 8080 $ logStdout (route start)
+main = run 8080 $ logStdout (route (prepare start))
 
-start :: Monad m => Routes m ()
-start = get "eval" eval (Query "x" :&: Query "y" :&: Query "f")
+start :: Monad m => Routes a m ()
+start = get "eval" eval (query "x" :&: query "y" :&: query "f")
 
 eval :: Monad m => Int ::: Int ::: Op -> m Response
 eval (x ::: y ::: f) = respond status200 . fromString . show $

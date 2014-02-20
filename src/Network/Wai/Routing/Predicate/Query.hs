@@ -7,8 +7,10 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module Network.Wai.Routing.Predicate.Query
-    ( Query    (..)
-    , HasQuery (..)
+    ( Query
+    , HasQuery
+    , query
+    , hasQuery
     ) where
 
 import Data.ByteString (ByteString)
@@ -22,6 +24,10 @@ import Network.Wai.Routing.Request
 
 newtype Query a = Query ByteString
 
+query :: ByteString -> Query a
+query = Query
+{-# INLINABLE query #-}
+
 instance (FromByteString a) => Predicate (Query a) Req where
     type FVal (Query a) = Error
     type TVal (Query a) = a
@@ -30,6 +36,10 @@ instance (FromByteString a) => Predicate (Query a) Req where
         rqApply (lookupQuery x) readValues (err status400 msg)
 
 newtype HasQuery = HasQuery ByteString
+
+hasQuery :: ByteString -> HasQuery
+hasQuery = HasQuery
+{-# INLINABLE hasQuery #-}
 
 instance Predicate HasQuery Req where
     type FVal HasQuery   = Error

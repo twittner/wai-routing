@@ -25,18 +25,18 @@ import Network.Wai.Routing
 import Network.Wai.Handler.Warp
 
 main :: IO ()
-main = run 8080 (route start)
+main = run 8080 (route (prepare start))
 
-start :: Monad m => Routes m ()
+start :: Monad m => Routes a m ()
 start = do
     get "/user/:name" fetchUser $
-        Capture "name"
+        capture "name"
 
     get "/user/find" findUser $
-        Query "byName" :||: Query "byId"
+        query "byName" :||: query "byId"
 
     delete "/user/:name" rmUser $
-        Capture "name" :&: Opt (Cookie "foo")
+        capture "name" :&: opt (cookie "foo")
 
 fetchUser :: Monad m => Text -> m Response
 fetchUser name = ...

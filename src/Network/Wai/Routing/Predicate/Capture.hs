@@ -19,8 +19,10 @@
 -- extracts from a request path whatever is given for @:name@
 -- and @:street@.
 module Network.Wai.Routing.Predicate.Capture
-    ( Capture    (..)
-    , HasCapture (..)
+    ( Capture
+    , HasCapture
+    , capture
+    , hasCapture
     ) where
 
 import Data.ByteString (ByteString)
@@ -34,6 +36,10 @@ import Network.Wai.Routing.Request
 
 newtype Capture a = Capture ByteString
 
+capture :: ByteString -> Capture a
+capture = Capture
+{-# INLINABLE capture #-}
+
 instance (FromByteString a) => Predicate (Capture a) Req where
     type FVal (Capture a) = Error
     type TVal (Capture a) = a
@@ -42,6 +48,10 @@ instance (FromByteString a) => Predicate (Capture a) Req where
         rqApply (lookupCapture x) readValues (err status400 msg)
 
 newtype HasCapture = HasCapture ByteString
+
+hasCapture :: ByteString -> HasCapture
+hasCapture = HasCapture
+{-# INLINABLE hasCapture #-}
 
 instance Predicate HasCapture Req where
     type FVal HasCapture   = Error

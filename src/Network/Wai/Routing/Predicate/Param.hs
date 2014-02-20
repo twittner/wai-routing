@@ -6,8 +6,10 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module Network.Wai.Routing.Predicate.Param
-    ( Param     (..)
-    , HasParam  (..)
+    ( Param
+    , HasParam
+    , param
+    , hasParam
     ) where
 
 import Data.ByteString (ByteString)
@@ -21,15 +23,23 @@ import Network.Wai.Routing.Predicate.Predicate
 -- | @Param \"x\"@ is equivalent to @'Query' \"x\" ':|:' 'Capture' \"x\"@.
 newtype Param a = Param ByteString
 
+param :: ByteString -> Param a
+param = Param
+{-# INLINABLE param #-}
+
 instance (FromByteString a) => Predicate (Param a) Req where
     type FVal (Param a) = Error
     type TVal (Param a) = a
-    apply (Param x)     = apply (Query x :|: Capture x)
+    apply (Param x)     = apply (query x :|: capture x)
 
 newtype HasParam = HasParam ByteString
+
+hasParam :: ByteString -> HasParam
+hasParam = HasParam
+{-# INLINABLE hasParam #-}
 
 instance Predicate HasParam Req where
     type FVal HasParam = Error
     type TVal HasParam = ()
-    apply (HasParam x) = apply (HasQuery x :|: HasCapture x)
+    apply (HasParam x) = apply (hasQuery x :|: hasCapture x)
 

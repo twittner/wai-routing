@@ -8,7 +8,33 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
 
-module Network.Wai.Routing.Predicate.Predicate where
+module Network.Wai.Routing.Predicate.Predicate
+    ( Delta
+    , Boolean   (..)
+    , Predicate (..)
+    , (:|:)     (..)
+    , (:&:)     (..)
+    , (:||:)    (..)
+    , (:::)     (..)
+    , (:+:)
+    , Const
+    , Fail
+    , Opt
+    , Def
+    , PMap
+    , PMapT
+    , PMapF
+
+    , constant
+    , failure
+    , true
+    , opt
+    , def
+    , pmap
+    , pmapT
+    , pmapF
+    , with
+    ) where
 
 import Prelude hiding (and, or)
 
@@ -53,13 +79,22 @@ instance Predicate (Const f t) a where
     type TVal (Const f t) = t
     apply (Const a) _     = T 0 a
 
+constant :: t -> Const f t
+constant = Const
+{-# INLINABLE constant #-}
+
 true :: Const a ()
 true = Const ()
+{-# INLINABLE true #-}
 
 -- | A 'Predicate' instance which always returns 'F' with
 -- the given value as F's meta-data.
 data Fail f t where
     Fail :: f -> Fail f t
+
+failure :: f -> Fail f t
+failure = Fail
+{-# INLINABLE failure #-}
 
 instance Predicate (Fail f t) a where
     type FVal (Fail f t) = f
@@ -125,10 +160,14 @@ instance (Predicate a c, Predicate b c, FVal a ~ FVal b) => Predicate (a :&: b) 
         and (T _ _) (F   f) = F f
         and (F   f) _       = F f
 
--- | An 'Predicate' modifier which makes the underlying predicate optional,
+-- | A 'Predicate' modifier which makes the underlying predicate optional,
 -- i.e. the 'TVal' becomes a 'Maybe' and in the failure-case 'Nothing' is
 -- returned.
 newtype Opt a = Opt a
+
+opt :: a -> Opt a
+opt = Opt
+{-# INLINABLE opt #-}
 
 instance (Predicate a b) => Predicate (Opt a) b where
     type FVal (Opt a) = FVal a
@@ -137,9 +176,13 @@ instance (Predicate a b) => Predicate (Opt a) b where
         T d x -> T d (Just x)
         F _   -> T 0 Nothing
 
--- | An 'Predicate' modifier which returns as 'TVal' the provided default
+-- | A 'Predicate' modifier which returns as 'TVal' the provided default
 -- value if the underlying predicate fails.
 data Def d a = Def d a
+
+def :: d -> a -> Def d a
+def = Def
+{-# INLINABLE def #-}
 
 instance (Predicate a b, d ~ TVal a) => Predicate (Def d a) b where
     type FVal (Def d a) = FVal a
@@ -147,6 +190,47 @@ instance (Predicate a b, d ~ TVal a) => Predicate (Def d a) b where
     apply (Def d a) r   = case apply a r of
         T n x -> T n x
         F _   -> T 0 d
+
+-- | A 'Predicate' function, i.e. a function of the underlying predicate's
+-- result.
+data PMap a f t = PMap (Boolean (FVal a) (TVal a) -> Boolean f t) a
+
+pmap :: (Boolean (FVal a) (TVal a) -> Boolean f t) -> a -> PMap a f t
+pmap = PMap
+{-# INLINABLE pmap #-}
+
+instance (Predicate a b) => Predicate (PMap a f t) b where
+    type FVal (PMap a f t) = f
+    type TVal (PMap a f t) = t
+    apply (PMap f a) r     = f $ apply a r
+
+-- | Like 'PMap' but a function of the underlying predicate's 'TVal'.
+data PMapT a t = PMapT (TVal a -> Boolean (FVal a) t) a
+
+pmapT :: (TVal a -> Boolean (FVal a) t) -> a -> PMapT a t
+pmapT = PMapT
+{-# INLINABLE pmapT #-}
+
+instance (Predicate a b) => Predicate (PMapT a t) b where
+    type FVal (PMapT a t) = FVal a
+    type TVal (PMapT a t) = t
+    apply (PMapT f a) r   = case apply a r of
+        (T _ x) -> f x
+        (F x)   -> F x
+
+-- | Like 'PMap' but a function of the underlying predicate's 'FVal'.
+data PMapF a f = PMapF (FVal a -> Boolean f (TVal a)) a
+
+pmapF :: (FVal a -> Boolean f (TVal a)) -> a -> PMapF a f
+pmapF = PMapF
+{-# INLINABLE pmapF #-}
+
+instance (Predicate a b) => Predicate (PMapF a f) b where
+    type FVal (PMapF a f) = f
+    type TVal (PMapF a f) = TVal a
+    apply (PMapF f a) r   = case apply a r of
+        (F   x) -> f x
+        (T d x) -> T d x
 
 -- | The 'with' function will invoke the given function only if the predicate 'p'
 -- applied to the test value 'a' evaluates to 'T'.

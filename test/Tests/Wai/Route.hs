@@ -25,12 +25,12 @@ tests = testGroup "Network.Wai.Routing"
 
 testSitemap :: IO ()
 testSitemap = do
-    let routes  = expand sitemap
-    assertEqual "Endpoints"
-        ["/a", "/b", "/c", "/d", "/e", "/f", "/g", "/h"]
-        (map fst routes)
+    let routes = prepare sitemap
 
-    let handler = route sitemap
+    [7,6,5,4,3,2,1,0] @=? examine sitemap
+    ["/a", "/b", "/c", "/d", "/e", "/f", "/g", "/h"] @=? map fst routes
+
+    let handler = route routes
     testEndpointA handler
     testEndpointB handler
     testEndpointC handler
@@ -39,30 +39,46 @@ testSitemap = do
     testEndpointF handler
     testEndpointH handler
 
-sitemap :: Routes IO ()
+sitemap :: Routes Int IO ()
 sitemap = do
     get "/a" handlerA $
-        Accept :&: (Query "name" :|: Query "nick") :&: Query "foo"
+        accept :&: (query "name" :|: query "nick") :&: query "foo"
+
+    attach 0
 
     get "/b" handlerB $
-        Query "baz"
+        query "baz"
+
+    attach 1
 
     get "/c" handlerC $
-        Opt (Query "foo")
+        opt (query "foo")
+
+    attach 2
 
     get "/d" handlerD $
-        Def 0 (Query "foo")
+        def 0 (query "foo")
+
+    attach 3
 
     get "/e" handlerE $
-        Def 0 (Hdr "foo")
+        def 0 (hdr "foo")
+
+    attach 4
 
     get "/f" handlerF $
-        Query "foo"
+        query "foo"
+
+    attach 5
 
     get "/g" handlerG true
 
+    attach 6
+
     get "/h" handlerH $
-        Cookie "user" :&: Cookie "age"
+        cookie "user" :&: cookie "age"
+
+    attach 7
 
 handlerA :: Media "application" "json" ::: Int ::: ByteString -> IO Response
 handlerA (_ ::: i ::: _) = writeText (fromString . show $ i)
@@ -203,14 +219,14 @@ testEndpointH f = do
 
 testMedia :: IO ()
 testMedia = do
-    let [(_, h)] = expand sitemapMedia
+    let [(_, h)] = prepare sitemapMedia
     expectMedia "application/json;q=0.3, application/x-thrift;q=0.7" "application/x-thrift" h
     expectMedia "application/json;q=0.7, application/x-thrift;q=0.3" "application/json" h
 
-sitemapMedia :: Routes IO ()
+sitemapMedia :: Routes a IO ()
 sitemapMedia = do
-    get "/media" handlerJson   Accept
-    get "/media" handlerThrift Accept
+    get "/media" handlerJson   accept
+    get "/media" handlerThrift accept
 
 handlerJson :: Media "application" "json" -> IO Response
 handlerJson _ = writeText "application/json"

@@ -8,7 +8,8 @@
 {-# LANGUAGE TypeFamilies          #-}
 
 module Network.Wai.Routing.Predicate.Accept
-    ( Accept (..)
+    ( Accept
+    , accept
     , module Network.Wai.Routing.MediaType
     ) where
 
@@ -28,6 +29,10 @@ import qualified Network.Wai.Routing.Parser.MediaType as M
 
 -- | A 'Predicate' against the 'Request's \"Accept\" header.
 data Accept (t :: Symbol) (s :: Symbol) = Accept
+
+accept :: Accept t s
+accept = Accept
+{-# INLINABLE accept #-}
 
 type1 :: SingI t => Accept t s -> ByteString
 type1 m = withSing (f m)

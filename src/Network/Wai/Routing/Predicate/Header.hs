@@ -7,8 +7,10 @@
 {-# LANGUAGE TypeFamilies          #-}
 
 module Network.Wai.Routing.Predicate.Header
-    ( Hdr    (..)
-    , HasHdr (..)
+    ( Hdr
+    , HasHdr
+    , hdr
+    , hasHdr
     ) where
 
 import Data.ByteString (ByteString)
@@ -25,6 +27,10 @@ import Network.Wai.Routing.Request
 
 newtype Hdr a = Hdr ByteString
 
+hdr :: ByteString -> Hdr a
+hdr = Hdr
+{-# INLINABLE hdr #-}
+
 instance (FromByteString a) => Predicate (Hdr a) Req where
     type FVal (Hdr a) = Error
     type TVal (Hdr a) = a
@@ -33,6 +39,10 @@ instance (FromByteString a) => Predicate (Hdr a) Req where
         rqApply (lookupHeader x) readValues (err status400 msg)
 
 newtype HasHdr = HasHdr ByteString
+
+hasHdr :: ByteString -> HasHdr
+hasHdr = HasHdr
+{-# INLINABLE hasHdr #-}
 
 instance Predicate HasHdr Req where
     type FVal HasHdr   = Error
