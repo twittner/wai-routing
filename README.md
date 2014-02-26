@@ -9,9 +9,6 @@ For details have a look at the haddock documentation of
 `Network.Wai.Routing.Tutorial` or the `examples` folder in the
 source distribution.
 
-This library is a port of `snap-predicates` which provides
-similar functionality for the snap framework.
-
 The routing tree construction is implemented using `wai-route`.
 
 Here is a simple usage example.
@@ -21,6 +18,7 @@ Here is a simple usage example.
 import Data.ByteString (ByteString)
 import Data.Text (Text)
 import Network.Wai
+import Network.Wai.Predicate
 import Network.Wai.Routing
 import Network.Wai.Handler.Warp
 
@@ -33,10 +31,10 @@ start = do
         capture "name"
 
     get "/user/find" findUser $
-        query "byName" :||: query "byId"
+        query "byName" ||| query "byId"
 
     delete "/user/:name" rmUser $
-        capture "name" :&: opt (cookie "foo")
+        capture "name" .&. opt (cookie "foo")
 
 fetchUser :: Monad m => Text -> m Response
 fetchUser name = ...

@@ -10,6 +10,7 @@ import Data.ByteString.From
 import Data.String
 import Network.HTTP.Types
 import Network.Wai
+import Network.Wai.Predicate
 import Network.Wai.Routing
 import Network.Wai.Handler.Warp
 import Network.Wai.Middleware.RequestLogger
@@ -31,7 +32,7 @@ main :: IO ()
 main = run 8080 $ logStdout (route (prepare start))
 
 start :: Monad m => Routes a m ()
-start = get "eval" eval (query "x" :&: query "y" :&: query "f")
+start = get "eval" eval (query "x" .&. query "y" .&. query "f")
 
 eval :: Monad m => Int ::: Int ::: Op -> m Response
 eval (x ::: y ::: f) = respond status200 . fromString . show $
