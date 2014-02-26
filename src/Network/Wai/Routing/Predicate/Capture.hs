@@ -57,6 +57,6 @@ instance Predicate HasCapture Req where
     type FVal HasCapture   = Error
     type TVal HasCapture   = ()
     apply (HasCapture x) r =
-        if null (lookupQuery x r)
+        if null (lookupCapture x r)
             then F (err status400 ("Missing path parameter '" <> x <> "'."))
             else T 0 ()
