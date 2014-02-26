@@ -1,5 +1,5 @@
 name:                wai-routing
-version:             0.3.1
+version:             0.4
 synopsis:            Declarative routing for WAI.
 license:             OtherLicense
 license-file:        LICENSE
@@ -21,14 +21,11 @@ description:
     .
     The set of possible handlers can be restricted by \"predicates\",
     which operate on WAI requests and have to be true or else the
-    handler will not be called.
+    handler will not be called (using @wai-predicates@).
     .
     For details have a look at the haddock documentation of
     @Network.Wai.Routing.Tutorial@ or the @examples@ folder in the
     source distribution.
-    .
-    This library is a port of @snap-predicates@ which provides
-    similar functionality for the snap-framework.
     .
     The routing tree construction is implemented using @wai-route@.
 
@@ -44,25 +41,9 @@ library
 
     exposed-modules:
         Network.Wai.Routing
-        Network.Wai.Routing.Error
-        Network.Wai.Routing.MediaType
         Network.Wai.Routing.Request
         Network.Wai.Routing.Route
-        Network.Wai.Routing.Tutorial
         Network.Wai.Routing.Predicate
-        Network.Wai.Routing.Predicate.Predicate
-        Network.Wai.Routing.Predicate.Accept
-        Network.Wai.Routing.Predicate.Capture
-        Network.Wai.Routing.Predicate.Content
-        Network.Wai.Routing.Predicate.Cookie
-        Network.Wai.Routing.Predicate.Header
-        Network.Wai.Routing.Predicate.Param
-        Network.Wai.Routing.Predicate.Query
-
-    other-modules:
-        Network.Wai.Routing.Internal
-        Network.Wai.Routing.Parser.MediaType
-        Network.Wai.Routing.Parser.Shared
 
     build-depends:
         attoparsec       >= 0.10  && < 0.12
@@ -74,6 +55,7 @@ library
       , http-types       == 0.8.*
       , transformers     == 0.3.*
       , wai              == 2.0.*
+      , wai-predicates   == 0.1.*
       , wai-route        == 0.1.*
 
 test-suite wai-routing-tests
@@ -85,21 +67,20 @@ test-suite wai-routing-tests
     ghc-prof-options: -prof -auto-all
 
     other-modules:
-        Tests.Data.Predicate
-        Tests.Wai.Predicate
         Tests.Wai.Route
         Tests.Wai.Util
 
     build-depends:
-        base                 == 4.*
-      , blaze-builder        == 0.3.*
+        base             == 4.*
+      , blaze-builder    == 0.3.*
       , bytestring
       , case-insensitive
       , http-types
-      , HUnit                >= 1.2
-      , QuickCheck           >= 2.3
-      , tasty                >= 0.3
-      , tasty-hunit          >= 0.2
-      , tasty-quickcheck     >= 0.3
+      , HUnit            >= 1.2
+      , QuickCheck       >= 2.3
+      , tasty            >= 0.3
+      , tasty-hunit      >= 0.2
+      , tasty-quickcheck >= 0.3
       , wai
+      , wai-predicates   == 0.1.*
       , wai-routing

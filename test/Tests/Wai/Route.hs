@@ -9,7 +9,10 @@ import Data.Monoid
 import Data.String
 import Network.HTTP.Types
 import Network.Wai
+import Network.Wai.Predicate
+import Network.Wai.Predicate.Request
 import Network.Wai.Routing
+import Network.Wai.Routing.Request
 import Test.HUnit hiding (Test)
 import Test.Tasty
 import Test.Tasty.HUnit
@@ -42,7 +45,7 @@ testSitemap = do
 sitemap :: Routes Int IO ()
 sitemap = do
     get "/a" handlerA $
-        accept :&: (query "name" :|: query "nick") :&: query "foo"
+        accept "application" "json" .&. (query "name" .|. query "nick") .&. query "foo"
 
     attach 0
 
@@ -62,7 +65,7 @@ sitemap = do
     attach 3
 
     get "/e" handlerE $
-        def 0 (hdr "foo")
+        def 0 (header "foo")
 
     attach 4
 
@@ -76,7 +79,7 @@ sitemap = do
     attach 6
 
     get "/h" handlerH $
-        cookie "user" :&: cookie "age"
+        cookie "user" .&. cookie "age"
 
     attach 7
 
@@ -225,8 +228,8 @@ testMedia = do
 
 sitemapMedia :: Routes a IO ()
 sitemapMedia = do
-    get "/media" handlerJson   accept
-    get "/media" handlerThrift accept
+    get "/media" handlerJson   $ accept "application" "json"
+    get "/media" handlerThrift $ accept "application" "x-thrift"
 
 handlerJson :: Media "application" "json" -> IO Response
 handlerJson _ = writeText "application/json"
@@ -234,8 +237,8 @@ handlerJson _ = writeText "application/json"
 handlerThrift :: Media "application" "x-thrift" -> IO Response
 handlerThrift _ = writeText "application/x-thrift"
 
-expectMedia :: ByteString -> ByteString -> (Req -> IO Response) -> Assertion
+expectMedia :: ByteString -> ByteString -> (RoutingReq -> IO Response) -> Assertion
 expectMedia h res m = do
     let rq = defaultRequest { rawPathInfo = "/media" }
-    rs <- m . fromWaiRequest [] . withHeader "Accept" h $ rq
+    rs <- m . fromReq [] . fromRequest . withHeader "Accept" h $ rq
     Lazy.fromStrict res @=? responseBody rs

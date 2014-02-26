@@ -4,12 +4,10 @@
 
 module Network.Wai.Routing
     ( module Network.Wai.Routing.Route
-    , module Network.Wai.Routing.Error
     , module Network.Wai.Routing.Predicate
-    , module Network.Wai.Routing.Request
+    , HasCaptures (..)
     ) where
 
-import Network.Wai.Routing.Route
-import Network.Wai.Routing.Error
 import Network.Wai.Routing.Predicate
 import Network.Wai.Routing.Request
+import Network.Wai.Routing.Route
