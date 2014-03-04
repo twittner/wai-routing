@@ -5,12 +5,6 @@ The set of possible handlers can be restricted by "predicates",
 which operate on WAI requests and have to be true or else the
 handler will not be called.
 
-For details have a look at the haddock documentation of
-`Network.Wai.Routing.Tutorial` or the `examples` folder in the
-source distribution.
-
-The routing tree construction is implemented using `wai-route`.
-
 Here is a simple usage example.
 
 
