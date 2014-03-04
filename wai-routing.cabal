@@ -22,12 +22,6 @@ description:
     The set of possible handlers can be restricted by \"predicates\",
     which operate on WAI requests and have to be true or else the
     handler will not be called.
-    .
-    For details have a look at the haddock documentation of
-    @Network.Wai.Routing.Tutorial@ or the @examples@ folder in the
-    source distribution.
-    .
-    The routing tree construction is implemented using @wai-route@.
 
 source-repository head
     type:             git
@@ -49,7 +43,7 @@ library
         attoparsec       >= 0.10  && < 0.12
       , base             == 4.*
       , bytestring       >= 0.9   && < 0.11
-      , bytestring-from  == 0.1.*
+      , bytestring-from  == 0.2.*
       , cookie           == 0.4.*
       , case-insensitive == 1.1.*
       , http-types       == 0.8.*
