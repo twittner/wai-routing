@@ -49,7 +49,7 @@ library
       , http-types       == 0.8.*
       , transformers     == 0.3.*
       , wai              == 2.0.*
-      , wai-predicates   == 0.1.*
+      , wai-predicates   == 0.2.*
       , wai-route        == 0.1.*
 
 test-suite wai-routing-tests
@@ -76,5 +76,5 @@ test-suite wai-routing-tests
       , tasty-hunit      >= 0.2
       , tasty-quickcheck >= 0.3
       , wai
-      , wai-predicates   == 0.1.*
+      , wai-predicates   == 0.2.*
       , wai-routing

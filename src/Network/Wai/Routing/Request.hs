@@ -21,7 +21,7 @@ data RoutingReq = RoutingReq
     }
 
 instance HasRequest RoutingReq where
-    request = request . _request
+    getRequest = getRequest . _request
 
 instance HasMethod RoutingReq where
     method = method . _request
