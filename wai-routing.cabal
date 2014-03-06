@@ -22,6 +22,39 @@ description:
     The set of possible handlers can be restricted by \"predicates\",
     which operate on WAI requests and have to be true or else the
     handler will not be called.
+    .
+    Example:
+    .
+    >import Data.ByteString (ByteString)
+    >import Data.Text (Text)
+    >import Network.Wai
+    >import Network.Wai.Predicate
+    >import Network.Wai.Routing
+    >import Network.Wai.Handler.Warp
+    >
+    >main :: IO ()
+    >main = run 8080 (route (prepare start))
+    >
+    >start :: Monad m => Routes a m ()
+    >start = do
+    >    get "/user/:name" fetchUser $
+    >        capture "name"
+    >
+    >    get "/user/find" findUser $
+    >        query "byName" ||| query "byId"
+    >
+    >    delete "/user/:name" rmUser $
+    >        capture "name" .&. opt (cookie "foo")
+    >
+    >fetchUser :: Monad m => Text -> m Response
+    >fetchUser name = ...
+    >
+    >findUser :: Monad m => Either ByteString Word64 -> m Response
+    >findUser (Left  name)  = ...
+    >findUser (Right ident) = ...
+    >
+    >rmUser :: Monad m => Text ::: Maybe Int -> m Response
+    >rmUser (name ::: foo)  = ...
 
 source-repository head
     type:             git

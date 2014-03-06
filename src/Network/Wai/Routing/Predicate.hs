@@ -4,6 +4,9 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
+-- | 'Predicate's which are specific to @wai-routing@.
+-- Please note that these can be freely combined with other predicates from
+-- @wai-predicates@.
 module Network.Wai.Routing.Predicate where
 
 import Data.ByteString (ByteString)
@@ -15,17 +18,20 @@ import Network.Wai.Predicate.Request
 import Network.Wai.Predicate.Utility
 import Network.Wai.Routing.Request
 
+-- | Request path parameters.
 capture :: (HasCaptures r, FromByteString a) => ByteString -> Predicate r Error a
 capture k r = case lookupCapture k r of
     [] -> Fail (err status400 ("Missing path parameter '" <> k <> "'."))
     cc -> either (Fail . err status400) return (readValues cc)
 
+-- | Request path parameters.
 hasCapture :: (HasCaptures r) => ByteString -> Predicate r Error ()
 hasCapture k r =
     if null (lookupCapture k r)
         then Fail (err status400 ("Missing path parameter '" <> k <> "'."))
         else return ()
 
+-- | @param \"foo\"@ is equivalent to @query \"foo\" .|. capture \"foo\"@
 param :: (HasCaptures r, HasQuery r, FromByteString a) => ByteString -> Predicate r Error a
 param k = query k .|. capture k
 

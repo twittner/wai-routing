@@ -9,11 +9,11 @@
 
 module Network.Wai.Routing.Route
     ( Routes
-    , Renderer
-    , route
     , prepare
-    , renderer
+    , route
     , addRoute
+    , attach
+    , examine
     , get
     , Network.Wai.Routing.Route.head
     , post
@@ -22,8 +22,8 @@ module Network.Wai.Routing.Route
     , trace
     , options
     , connect
-    , attach
-    , examine
+    , Renderer
+    , renderer
     ) where
 
 import Control.Applicative hiding (Const)
