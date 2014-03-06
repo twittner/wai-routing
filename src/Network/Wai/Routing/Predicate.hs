@@ -2,23 +2,38 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-module Network.Wai.Routing.Predicate
-    ( module Network.Wai.Routing.Predicate.Accept
-    , module Network.Wai.Routing.Predicate.Capture
-    , module Network.Wai.Routing.Predicate.Content
-    , module Network.Wai.Routing.Predicate.Cookie
-    , module Network.Wai.Routing.Predicate.Header
-    , module Network.Wai.Routing.Predicate.Param
-    , module Network.Wai.Routing.Predicate.Predicate
-    , module Network.Wai.Routing.Predicate.Query
-    ) where
+{-# LANGUAGE OverloadedStrings #-}
 
-import Network.Wai.Routing.Predicate.Accept
-import Network.Wai.Routing.Predicate.Capture
-import Network.Wai.Routing.Predicate.Content
-import Network.Wai.Routing.Predicate.Cookie
-import Network.Wai.Routing.Predicate.Header
-import Network.Wai.Routing.Predicate.Param
-import Network.Wai.Routing.Predicate.Predicate
-import Network.Wai.Routing.Predicate.Query
+-- | 'Predicate's which are specific to @wai-routing@.
+-- Please note that these can be freely combined with other predicates from
+-- @wai-predicates@.
+module Network.Wai.Routing.Predicate where
 
+import Data.ByteString (ByteString)
+import Data.ByteString.From
+import Data.Monoid
+import Network.HTTP.Types
+import Network.Wai.Predicate
+import Network.Wai.Predicate.Request
+import Network.Wai.Predicate.Utility
+import Network.Wai.Routing.Request
+
+-- | Request path parameters.
+capture :: (HasCaptures r, FromByteString a) => ByteString -> Predicate r Error a
+capture k r = case lookupCapture k r of
+    [] -> Fail (err status400 ("Missing path parameter '" <> k <> "'."))
+    cc -> either (Fail . err status400) return (readValues cc)
+
+-- | Request path parameters.
+hasCapture :: (HasCaptures r) => ByteString -> Predicate r Error ()
+hasCapture k r =
+    if null (lookupCapture k r)
+        then Fail (err status400 ("Missing path parameter '" <> k <> "'."))
+        else return ()
+
+-- | @param \"foo\"@ is equivalent to @query \"foo\" .|. capture \"foo\"@
+param :: (HasCaptures r, HasQuery r, FromByteString a) => ByteString -> Predicate r Error a
+param k = query k .|. capture k
+
+hasParam :: (HasCaptures r, HasQuery r) => ByteString -> Predicate r Error ()
+hasParam k = hasQuery k .|. hasCapture k

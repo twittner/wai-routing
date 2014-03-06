@@ -1,5 +1,5 @@
 name:                wai-routing
-version:             0.3.1
+version:             0.4
 synopsis:            Declarative routing for WAI.
 license:             OtherLicense
 license-file:        LICENSE
@@ -23,14 +23,38 @@ description:
     which operate on WAI requests and have to be true or else the
     handler will not be called.
     .
-    For details have a look at the haddock documentation of
-    @Network.Wai.Routing.Tutorial@ or the @examples@ folder in the
-    source distribution.
+    Example:
     .
-    This library is a port of @snap-predicates@ which provides
-    similar functionality for the snap-framework.
-    .
-    The routing tree construction is implemented using @wai-route@.
+    >import Data.ByteString (ByteString)
+    >import Data.Text (Text)
+    >import Network.Wai
+    >import Network.Wai.Predicate
+    >import Network.Wai.Routing
+    >import Network.Wai.Handler.Warp
+    >
+    >main :: IO ()
+    >main = run 8080 (route (prepare start))
+    >
+    >start :: Monad m => Routes a m ()
+    >start = do
+    >    get "/user/:name" fetchUser $
+    >        capture "name"
+    >
+    >    get "/user/find" findUser $
+    >        query "byName" ||| query "byId"
+    >
+    >    delete "/user/:name" rmUser $
+    >        capture "name" .&. opt (cookie "foo")
+    >
+    >fetchUser :: Monad m => Text -> m Response
+    >fetchUser name = ...
+    >
+    >findUser :: Monad m => Either ByteString Word64 -> m Response
+    >findUser (Left  name)  = ...
+    >findUser (Right ident) = ...
+    >
+    >rmUser :: Monad m => Text ::: Maybe Int -> m Response
+    >rmUser (name ::: foo)  = ...
 
 source-repository head
     type:             git
@@ -44,36 +68,21 @@ library
 
     exposed-modules:
         Network.Wai.Routing
-        Network.Wai.Routing.Error
-        Network.Wai.Routing.MediaType
         Network.Wai.Routing.Request
         Network.Wai.Routing.Route
-        Network.Wai.Routing.Tutorial
         Network.Wai.Routing.Predicate
-        Network.Wai.Routing.Predicate.Predicate
-        Network.Wai.Routing.Predicate.Accept
-        Network.Wai.Routing.Predicate.Capture
-        Network.Wai.Routing.Predicate.Content
-        Network.Wai.Routing.Predicate.Cookie
-        Network.Wai.Routing.Predicate.Header
-        Network.Wai.Routing.Predicate.Param
-        Network.Wai.Routing.Predicate.Query
-
-    other-modules:
-        Network.Wai.Routing.Internal
-        Network.Wai.Routing.Parser.MediaType
-        Network.Wai.Routing.Parser.Shared
 
     build-depends:
         attoparsec       >= 0.10  && < 0.12
       , base             == 4.*
       , bytestring       >= 0.9   && < 0.11
-      , bytestring-from  == 0.1.*
+      , bytestring-from  == 0.2.*
       , cookie           == 0.4.*
       , case-insensitive == 1.1.*
       , http-types       == 0.8.*
       , transformers     == 0.3.*
       , wai              == 2.0.*
+      , wai-predicates   == 0.2.*
       , wai-route        == 0.1.*
 
 test-suite wai-routing-tests
@@ -85,21 +94,20 @@ test-suite wai-routing-tests
     ghc-prof-options: -prof -auto-all
 
     other-modules:
-        Tests.Data.Predicate
-        Tests.Wai.Predicate
         Tests.Wai.Route
         Tests.Wai.Util
 
     build-depends:
-        base                 == 4.*
-      , blaze-builder        == 0.3.*
+        base             == 4.*
+      , blaze-builder    == 0.3.*
       , bytestring
       , case-insensitive
       , http-types
-      , HUnit                >= 1.2
-      , QuickCheck           >= 2.3
-      , tasty                >= 0.3
-      , tasty-hunit          >= 0.2
-      , tasty-quickcheck     >= 0.3
+      , HUnit            >= 1.2
+      , QuickCheck       >= 2.3
+      , tasty            >= 0.3
+      , tasty-hunit      >= 0.2
+      , tasty-quickcheck >= 0.3
       , wai
+      , wai-predicates   == 0.2.*
       , wai-routing

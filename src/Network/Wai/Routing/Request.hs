@@ -2,84 +2,48 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-
--- | A wrapped WAI 'Request' which holds additional data of interest
--- only to 'Predicate' authors.
 module Network.Wai.Routing.Request
-    ( Req
-    , GetRequest
-    , getRequest
-    , fromWaiRequest
-    , waiRequest
-    , method
-    , headers
-    , lookupHeader
+    ( RoutingReq
+    , HasCaptures (..)
+    , fromReq
     , lookupCapture
-    , lookupQuery
-    , lookupCookie
     ) where
 
 import Data.ByteString (ByteString)
-import Data.CaseInsensitive (mk)
-import Data.Maybe (mapMaybe)
-import Network.HTTP.Types
-import Network.Wai (Request)
-import Network.Wai.Routing.Predicate.Predicate
-import Web.Cookie
+import Network.Wai.Predicate.Request
 
-import qualified Network.Wai as Wai
+class HasCaptures a where
+     captures :: a -> [(ByteString, ByteString)]
 
-data Req = Req
-    { captures :: [(ByteString, ByteString)]
-    , request  :: Request
-    , cookies  :: Cookies
+data RoutingReq = RoutingReq
+    { _captures :: [(ByteString, ByteString)]
+    , _request  :: Req
     }
 
--- | A 'Predicate' which just returns the WAI 'Wai.Request'.
--- By including this predicate, handlers have easy access to
--- the complete request.
-data GetRequest a = GetRequest
+instance HasRequest RoutingReq where
+    getRequest = getRequest . _request
 
-getRequest :: GetRequest a
-getRequest = GetRequest
-{-# INLINABLE getRequest #-}
+instance HasMethod RoutingReq where
+    method = method . _request
 
-instance Predicate (GetRequest a) Req where
-    type FVal (GetRequest a) = a
-    type TVal (GetRequest a) = Request
-    apply GetRequest r       = T 0 (request r)
+instance HasHeaders RoutingReq where
+    headers = headers . _request
 
-fromWaiRequest :: [(ByteString, ByteString)] -> Request -> Req
-fromWaiRequest ca rq =
-    Req ca rq (concatMap parseCookies (getHeaders "Cookie" rq))
+instance HasCookies RoutingReq where
+    cookies = cookies . _request
 
-waiRequest :: Req -> Request
-waiRequest = request
+instance HasQuery RoutingReq where
+    queryItems = queryItems . _request
 
-headers :: Req -> RequestHeaders
-headers = Wai.requestHeaders . request
+instance HasPath RoutingReq where
+    segments = segments . _request
 
-method :: Req -> Method
-method = Wai.requestMethod . request
+instance HasCaptures RoutingReq where
+    captures = _captures
 
-lookupHeader :: ByteString -> Req -> [ByteString]
-lookupHeader name = getHeaders name . request
+fromReq :: [(ByteString, ByteString)] -> Req -> RoutingReq
+fromReq = RoutingReq
 
-lookupCapture :: ByteString -> Req -> [ByteString]
+lookupCapture :: (HasCaptures r) => ByteString -> r -> [ByteString]
 lookupCapture name = map snd . filter ((name ==) . fst) . captures
-
-lookupCookie :: ByteString -> Req -> [ByteString]
-lookupCookie name = map snd . filter ((name ==) . fst) . cookies
-
-lookupQuery :: ByteString -> Req -> [ByteString]
-lookupQuery name = mapMaybe snd
-                 . filter ((name ==) . fst)
-                 . Wai.queryString
-                 . request
-
-getHeaders :: ByteString -> Wai.Request -> [ByteString]
-getHeaders name = map snd . filter ((mk name ==) . fst) . Wai.requestHeaders
 

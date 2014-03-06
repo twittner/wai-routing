@@ -9,11 +9,11 @@
 
 module Network.Wai.Routing.Route
     ( Routes
-    , Renderer
-    , route
     , prepare
-    , renderer
+    , route
     , addRoute
+    , attach
+    , examine
     , get
     , Network.Wai.Routing.Route.head
     , post
@@ -22,8 +22,8 @@ module Network.Wai.Routing.Route
     , trace
     , options
     , connect
-    , attach
-    , examine
+    , Renderer
+    , renderer
     ) where
 
 import Control.Applicative hiding (Const)
@@ -38,8 +38,8 @@ import Data.Maybe (fromMaybe, mapMaybe)
 import Data.Monoid
 import Network.HTTP.Types
 import Network.Wai (Request, Response, responseLBS, responseBuilder, rawPathInfo)
-import Network.Wai.Routing.Predicate
-import Network.Wai.Routing.Error
+import Network.Wai.Predicate
+import Network.Wai.Predicate.Request
 import Network.Wai.Routing.Request
 
 import qualified Data.ByteString.Char8  as C
@@ -55,15 +55,12 @@ data Route a m = Route
     }
 
 data Handler m = Handler
-    { _delta   :: !Delta
+    { _delta   :: !Double
     , _handler :: m Response
     }
 
 data Pack m where
-    Pack :: (Predicate p Req, FVal p ~ Error)
-         => p
-         -> (TVal p -> m Response)
-         -> Pack m
+    Pack :: Predicate RoutingReq Error a -> (a -> m Response) -> Pack m
 
 -- | Function to turn an 'Error' value into a 'Lazy.ByteString'.
 -- Clients can provide their own renderer using 'renderer'.
@@ -71,7 +68,7 @@ type Renderer = Error -> Maybe Lazy.ByteString
 
 -- | Set a custom render function, i.e. a function to turn 'Error's into
 -- 'Lazy.ByteString's.
-renderer :: Renderer -> Routes m a ()
+renderer :: Renderer -> Routes a m ()
 renderer f = Routes . modify $ \s -> s { renderfn = f }
 
 -- | The Routes monad state type.
@@ -101,22 +98,22 @@ instance Monad (Routes a m) where
 
 -- | Add a route for some 'Method' and path (potentially with variable
 -- captures) and constrained by some 'Predicate'.
-addRoute :: (Monad m, Predicate p Req, FVal p ~ Error)
+addRoute :: Monad m
          => Method
-         -> ByteString             -- ^ path
-         -> (TVal p -> m Response) -- ^ handler
-         -> p                      -- ^ 'Predicate'
-         -> Routes a m ()
+         -> ByteString                   -- ^ path
+         -> (a -> m Response)            -- ^ handler
+         -> Predicate RoutingReq Error a -- ^ 'Predicate'
+         -> Routes b m ()
 addRoute m r x p = Routes . modify $ \s ->
     s { routes = Route m r Nothing (Pack p x) : routes s }
 
 -- | Specialisation of 'addRoute' for a specific HTTP 'Method'.
 get, head, post, put, delete, trace, options, connect ::
-    (Monad m, Predicate p Req, FVal p ~ Error)
-    => ByteString             -- ^ path
-    -> (TVal p -> m Response) -- ^ handler
-    -> p                      -- ^ 'Predicate'
-    -> Routes a m ()
+    Monad m
+    => ByteString                   -- ^ path
+    -> (a -> m Response)            -- ^ handler
+    -> Predicate RoutingReq Error a -- ^ 'Predicate'
+    -> Routes b m ()
 get     = addRoute (renderStdMethod GET)
 head    = addRoute (renderStdMethod HEAD)
 post    = addRoute (renderStdMethod POST)
@@ -140,17 +137,17 @@ examine (Routes r) = let St rr _ = execState r zero in
 
 -- | A WAI 'Application' (generalised from 'IO' to 'Monad') which
 -- routes requests to handlers based on predicated route declarations.
-route :: Monad m => [(ByteString, Req -> m Response)] -> Request -> m Response
+route :: Monad m => [(ByteString, RoutingReq -> m Response)] -> Request -> m Response
 route rm rq = do
     let tr = Tree.fromList rm
     case Tree.lookup tr (Tree.segments $ rawPathInfo rq) of
-        Just (f, v) -> f (fromWaiRequest v rq)
+        Just (f, v) -> f (fromReq v (fromRequest rq))
         Nothing     -> return notFound
   where
     notFound = responseLBS status404 [] ""
 
 -- | Run the 'Routes' monad and return the handlers per path.
-prepare :: Monad m => Routes a m b -> [(ByteString, Req -> m Response)]
+prepare :: Monad m => Routes a m b -> [(ByteString, RoutingReq -> m Response)]
 prepare (Routes rr) =
     let s = execState rr zero in
     map (\g -> (_path (L.head g), select (renderfn s) g)) (normalise (routes s))
@@ -184,7 +181,7 @@ normalise rr =
 -- (2) Evaluate 'Route' predicates.
 -- (3) Pick the first one which is 'Good', or else respond with status
 --     and message of the first one.
-select :: Monad m => Renderer -> [Route a m] -> Req -> m Response
+select :: Monad m => Renderer -> [Route a m] -> RoutingReq -> m Response
 select render rr req = do
     let ms = filter ((method req ==) . _method) rr
     if null ms
@@ -207,9 +204,9 @@ select render rr req = do
     evalSingle :: Monad m => [Either Error (Handler m)] -> Route a m -> [Either Error (Handler m)]
     evalSingle rs r =
         case _pred r of
-            Pack p h -> case apply p req of
-                F   m -> Left m : rs
-                T d v -> Right (Handler d (h v)) : rs
+            Pack p h -> case p req of
+                Fail   m -> Left m : rs
+                Okay d v -> Right (Handler d (h v)) : rs
 
     closest :: Monad m => [Handler m] -> m Response
     closest hh = case map _handler . sortBy (compare `on` _delta) $ hh of
@@ -218,3 +215,4 @@ select render rr req = do
 
 respond :: Renderer -> Error -> ResponseHeaders -> Response
 respond f e h = responseLBS (status e) h (fromMaybe mempty (f e))
+
