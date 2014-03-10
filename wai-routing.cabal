@@ -1,5 +1,5 @@
 name:                wai-routing
-version:             0.4.1
+version:             0.5
 synopsis:            Declarative routing for WAI.
 license:             OtherLicense
 license-file:        LICENSE
@@ -13,6 +13,7 @@ cabal-version:       >= 1.10
 
 extra-source-files:
     README.md
+    CHANGELOG.md
     examples/*.hs
 
 description:
@@ -82,7 +83,7 @@ library
       , http-types       == 0.8.*
       , transformers     == 0.3.*
       , wai              >= 2.0 && < 2.2
-      , wai-predicates   == 0.2.*
+      , wai-predicates   == 0.3.*
       , wai-route        == 0.1.*
 
 test-suite wai-routing-tests
