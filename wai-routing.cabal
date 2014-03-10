@@ -13,6 +13,7 @@ cabal-version:       >= 1.10
 
 extra-source-files:
     README.md
+    CHANGELOG.md
     examples/*.hs
 
 description:
@@ -25,6 +26,8 @@ description:
     .
     Example:
     .
+    >{-# LANGUAGE OverloadedStrings, TypeOperators #-}
+    >
     >import Data.ByteString (ByteString)
     >import Data.Text (Text)
     >import Network.Wai
