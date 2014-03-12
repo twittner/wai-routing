@@ -4,8 +4,6 @@
 
 {-# LANGUAGE GADTs             #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeOperators     #-}
-{-# LANGUAGE FlexibleContexts  #-}
 
 module Network.Wai.Routing.Route
     ( Routes
