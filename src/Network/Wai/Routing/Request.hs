@@ -41,6 +41,9 @@ instance HasPath RoutingReq where
 instance HasCaptures RoutingReq where
     captures = _captures
 
+instance HasVault RoutingReq where
+    requestVault = requestVault . _request
+
 fromReq :: [(ByteString, ByteString)] -> Req -> RoutingReq
 fromReq = RoutingReq
 
