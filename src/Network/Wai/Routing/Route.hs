@@ -21,6 +21,7 @@ module Network.Wai.Routing.Route
     , trace
     , options
     , connect
+    , patch
     , Renderer
     , renderer
     ) where
@@ -113,7 +114,7 @@ addRoute m r x p = Routes . modify $ \s ->
     s { routes = Route m r Nothing (Pack p x) : routes s }
 
 -- | Specialisation of 'addRoute' for a specific HTTP 'Method'.
-get, head, post, put, delete, trace, options, connect ::
+get, head, post, put, delete, trace, options, connect, patch ::
     Monad m
     => ByteString                   -- ^ path
     -> (a -> m Response)            -- ^ handler
@@ -127,6 +128,7 @@ delete  = addRoute (renderStdMethod DELETE)
 trace   = addRoute (renderStdMethod TRACE)
 options = addRoute (renderStdMethod OPTIONS)
 connect = addRoute (renderStdMethod CONNECT)
+patch   = addRoute (renderStdMethod PATCH)
 
 -- | Add some metadata to the last route.
 attach :: a -> Routes a m ()
