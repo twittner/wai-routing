@@ -7,6 +7,7 @@
 
 module Network.Wai.Routing.Route
     ( Routes
+    , Meta (..)
     , prepare
     , route
     , addRoute
@@ -63,6 +64,12 @@ data Pack m where
 -- | Function to turn an 'Error' value into a 'Lazy.ByteString'.
 -- Clients can provide their own renderer using 'renderer'.
 type Renderer = Error -> Maybe Lazy.ByteString
+
+data Meta a = Meta
+    { routeMethod :: !Method
+    , routePath   :: !ByteString
+    , routeMeta   :: a
+    }
 
 -- | Set a custom render function, i.e. a function to turn 'Error's into
 -- 'Lazy.ByteString's.
@@ -129,9 +136,9 @@ attach a = Routes $ modify addToLast
     addToLast (St (r:rr) f) = St (r { _meta = Just a } : rr) f
 
 -- | Get back all attached metadata.
-examine :: Routes a m b -> [a]
+examine :: Routes a m b -> [Meta a]
 examine (Routes r) = let St rr _ = execState r zero in
-    mapMaybe _meta rr
+    mapMaybe (\x -> Meta (_method x) (_path x) <$> _meta x) rr
 
 -- | A WAI 'Application' (generalised from 'IO' to 'Monad') which
 -- routes requests to handlers based on predicated route declarations.
