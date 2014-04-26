@@ -1,7 +1,7 @@
 0.6
 -----------------------------------------------------------------------------
-- Add `Meta` type to return route metadata via `attach`
-- Support `patch` four route declarations
+- Add `Meta` type to return route metadata added via `attach`
+- Support `patch` for route declarations
 
 0.5.1
 -----------------------------------------------------------------------------
