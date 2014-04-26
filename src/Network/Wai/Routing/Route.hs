@@ -66,6 +66,7 @@ data Pack m where
 -- Clients can provide their own renderer using 'renderer'.
 type Renderer = Error -> Maybe Lazy.ByteString
 
+-- | Data added to a route via 'attach' is returned in this @Meta@ record.
 data Meta a = Meta
     { routeMethod :: !Method
     , routePath   :: !ByteString
