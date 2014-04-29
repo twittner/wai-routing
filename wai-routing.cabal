@@ -1,7 +1,7 @@
 name:                wai-routing
 version:             0.6
 synopsis:            Declarative routing for WAI.
-license:             MPL-2.0
+license:             OtherLicense
 license-file:        LICENSE
 author:              Toralf Wittner
 maintainer:          Toralf Wittner <tw@dtex.org>
@@ -9,7 +9,7 @@ copyright:           (c) 2014 Toralf Wittner
 stability:           experimental
 category:            Web
 build-type:          Simple
-cabal-version:       >= 1.20
+cabal-version:       >= 1.10
 
 extra-source-files:
     README.md
