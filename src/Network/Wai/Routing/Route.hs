@@ -7,6 +7,7 @@
 
 module Network.Wai.Routing.Route
     ( Routes
+    , Meta (..)
     , prepare
     , route
     , addRoute
@@ -20,6 +21,7 @@ module Network.Wai.Routing.Route
     , trace
     , options
     , connect
+    , patch
     , Renderer
     , renderer
     ) where
@@ -64,6 +66,13 @@ data Pack m where
 -- Clients can provide their own renderer using 'renderer'.
 type Renderer = Error -> Maybe Lazy.ByteString
 
+-- | Data added to a route via 'attach' is returned in this @Meta@ record.
+data Meta a = Meta
+    { routeMethod :: !Method
+    , routePath   :: !ByteString
+    , routeMeta   :: a
+    }
+
 -- | Set a custom render function, i.e. a function to turn 'Error's into
 -- 'Lazy.ByteString's.
 renderer :: Renderer -> Routes a m ()
@@ -106,7 +115,7 @@ addRoute m r x p = Routes . modify $ \s ->
     s { routes = Route m r Nothing (Pack p x) : routes s }
 
 -- | Specialisation of 'addRoute' for a specific HTTP 'Method'.
-get, head, post, put, delete, trace, options, connect ::
+get, head, post, put, delete, trace, options, connect, patch ::
     Monad m
     => ByteString                   -- ^ path
     -> (a -> m Response)            -- ^ handler
@@ -120,6 +129,7 @@ delete  = addRoute (renderStdMethod DELETE)
 trace   = addRoute (renderStdMethod TRACE)
 options = addRoute (renderStdMethod OPTIONS)
 connect = addRoute (renderStdMethod CONNECT)
+patch   = addRoute (renderStdMethod PATCH)
 
 -- | Add some metadata to the last route.
 attach :: a -> Routes a m ()
@@ -129,9 +139,9 @@ attach a = Routes $ modify addToLast
     addToLast (St (r:rr) f) = St (r { _meta = Just a } : rr) f
 
 -- | Get back all attached metadata.
-examine :: Routes a m b -> [a]
+examine :: Routes a m b -> [Meta a]
 examine (Routes r) = let St rr _ = execState r zero in
-    mapMaybe _meta rr
+    mapMaybe (\x -> Meta (_method x) (_path x) <$> _meta x) rr
 
 -- | A WAI 'Application' (generalised from 'IO' to 'Monad') which
 -- routes requests to handlers based on predicated route declarations.

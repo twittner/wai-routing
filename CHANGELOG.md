@@ -1,3 +1,8 @@
+0.6
+-----------------------------------------------------------------------------
+- Add `Meta` type to return route metadata added via `attach`
+- Support `patch` for route declarations
+
 0.5.1
 -----------------------------------------------------------------------------
 - Add `HasVault` instance

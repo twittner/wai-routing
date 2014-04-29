@@ -30,7 +30,7 @@ testSitemap :: IO ()
 testSitemap = do
     let routes = prepare sitemap
 
-    [7,6,5,4,3,2,1,0] @=? examine sitemap
+    [7,6,5,4,3,2,1,0] @=? map routeMeta (examine sitemap)
     ["/a", "/b", "/c", "/d", "/e", "/f", "/g", "/h"] @=? map fst routes
 
     let handler = route routes
