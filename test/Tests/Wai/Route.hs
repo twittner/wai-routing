@@ -131,11 +131,11 @@ testEndpointB f = do
 
     rs0 <- f rq
     status400 @=? responseStatus rs0
-    "Missing query 'baz'." @=? responseBody rs0
+    "'baz' (not-available) [query]" @=? responseBody rs0
 
     rs1 <- f . withQuery "baz" "abc" $ rq
     status400 @=? responseStatus rs1
-    "Failed reading: Invalid Int" @=? responseBody rs1
+    "Failed reading: Invalid Int: 'baz' (type-error) [query]" @=? responseBody rs1
 
     rs2 <- f . withQuery "baz" "abc" . withQuery "baz" "123" $ rq
     status200 @=? responseStatus rs2
@@ -207,11 +207,11 @@ testEndpointH f = do
 
     rs0 <- f rq
     status400 @=? responseStatus rs0
-    "Missing cookie 'user'." @=? responseBody rs0
+    "'user' (not-available) [cookie]" @=? responseBody rs0
 
     rs1 <- f . withHeader "Cookie" "user=joe" $ rq
     status400 @=? responseStatus rs1
-    "Missing cookie 'age'." @=? responseBody rs1
+    "'age' (not-available) [cookie]" @=? responseBody rs1
 
     rs2 <- f . withHeader "Cookie" "user=joe; age=42" $ rq
     status200 @=? responseStatus rs2
