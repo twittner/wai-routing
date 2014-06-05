@@ -84,14 +84,15 @@ defRenderer e =
         s = source2str  <$> source e
         m = message2str <$> message e
         l = labels2str . map Lazy.fromStrict $ labels e
-    in case catMaybes [m, s, r, l] of
-           [] -> Nothing
-           xs -> Just (Lazy.intercalate " " xs)
+        x = case catMaybes [s, r, l] of
+               [] -> Nothing
+               xs -> Just (Lazy.intercalate " " xs)
+    in maybe x (\y -> (<> (" -- " <> y)) <$> x) m
   where
-    reason2str  NotAvailable = "(not-available)"
-    reason2str  TypeError    = "(type-error)"
+    reason2str  NotAvailable = "not-available"
+    reason2str  TypeError    = "type-error"
     source2str  s  = "'" <> Lazy.fromStrict s <> "'"
-    message2str s  = Lazy.fromStrict s <> ":"
+    message2str s  = Lazy.fromStrict s
     labels2str  [] = Nothing
     labels2str  xs = Just $ "[" <> Lazy.intercalate "," xs <> "]"
 

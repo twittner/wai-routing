@@ -131,11 +131,11 @@ testEndpointB f = do
 
     rs0 <- f rq
     status400 @=? responseStatus rs0
-    "'baz' (not-available) [query]" @=? responseBody rs0
+    "'baz' not-available [query]" @=? responseBody rs0
 
     rs1 <- f . withQuery "baz" "abc" $ rq
     status400 @=? responseStatus rs1
-    "Failed reading: Invalid Int: 'baz' (type-error) [query]" @=? responseBody rs1
+    "'baz' type-error [query] -- Failed reading: Invalid Int" @=? responseBody rs1
 
     rs2 <- f . withQuery "baz" "abc" . withQuery "baz" "123" $ rq
     status200 @=? responseStatus rs2
@@ -155,7 +155,8 @@ testEndpointC f = do
     "Just 123" @=? responseBody rs1
 
     rs2 <- f . withQuery "foo" "abc" $ rq
-    status200 @=? responseStatus rs2
+    status400 @=? responseStatus rs2
+    "'foo' type-error [query] -- Failed reading: Invalid Int" @=? responseBody rs2
 
 
 testEndpointD :: Application -> Assertion
@@ -171,8 +172,8 @@ testEndpointD f = do
     "42"      @=? responseBody rs1
 
     rs2 <- f . withQuery "foo" "yyy" $ rq
-    status200 @=? responseStatus rs2
-    "0"       @=? responseBody rs2
+    status400 @=? responseStatus rs2
+    "'foo' type-error [query] -- Failed reading: Invalid Int" @=? responseBody rs2
 
 
 testEndpointE :: Application -> Assertion
@@ -188,8 +189,8 @@ testEndpointE f = do
     "42"      @=? responseBody rs1
 
     rs2 <- f $ withHeader "foo" "abc" rq
-    status200 @=? responseStatus rs2
-    "0"       @=? responseBody rs2
+    status400 @=? responseStatus rs2
+    "'foo' type-error [header] -- Failed reading: Invalid Int" @=? responseBody rs2
 
 
 testEndpointF :: Application -> Assertion
@@ -207,11 +208,11 @@ testEndpointH f = do
 
     rs0 <- f rq
     status400 @=? responseStatus rs0
-    "'user' (not-available) [cookie]" @=? responseBody rs0
+    "'user' not-available [cookie]" @=? responseBody rs0
 
     rs1 <- f . withHeader "Cookie" "user=joe" $ rq
     status400 @=? responseStatus rs1
-    "'age' (not-available) [cookie]" @=? responseBody rs1
+    "'age' not-available [cookie]" @=? responseBody rs1
 
     rs2 <- f . withHeader "Cookie" "user=joe; age=42" $ rq
     status200 @=? responseStatus rs2
