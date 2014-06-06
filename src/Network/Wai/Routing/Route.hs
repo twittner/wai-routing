@@ -34,7 +34,7 @@ import Data.CaseInsensitive (mk)
 import Data.Either
 import Data.Function
 import Data.List hiding (head, delete)
-import Data.Maybe (fromMaybe, mapMaybe)
+import Data.Maybe (fromMaybe, mapMaybe, catMaybes)
 import Data.Monoid
 import Network.HTTP.Types
 import Network.Wai (Request, Response, responseLBS, responseBuilder, rawPathInfo)
@@ -78,6 +78,24 @@ data Meta a = Meta
 renderer :: Renderer -> Routes a m ()
 renderer f = Routes . modify $ \s -> s { renderfn = f }
 
+defRenderer :: Renderer
+defRenderer e =
+    let r = reason2str  <$> reason e
+        s = source2str  <$> source e
+        m = message2str <$> message e
+        l = labels2str . map Lazy.fromStrict $ labels e
+        x = case catMaybes [s, r, l] of
+               [] -> Nothing
+               xs -> Just (Lazy.intercalate " " xs)
+    in maybe x (\y -> (<> (" -- " <> y)) <$> x) m
+  where
+    reason2str  NotAvailable = "not-available"
+    reason2str  TypeError    = "type-error"
+    source2str  s  = "'" <> Lazy.fromStrict s <> "'"
+    message2str s  = Lazy.fromStrict s
+    labels2str  [] = Nothing
+    labels2str  xs = Just $ "[" <> Lazy.intercalate "," xs <> "]"
+
 -- | The Routes monad state type.
 data St a m = St
     { routes   :: [Route a m]
@@ -86,7 +104,7 @@ data St a m = St
 
 -- | Initial state.
 zero :: St a m
-zero = St [] (fmap Lazy.fromStrict . message)
+zero = St [] defRenderer
 
 -- | The Routes monad is used to add routing declarations
 -- via 'addRoute' or one of 'get', 'post', etc.
@@ -193,7 +211,7 @@ select :: Monad m => Renderer -> [Route a m] -> RoutingReq -> m Response
 select render rr req = do
     let ms = filter ((method req ==) . _method) rr
     if null ms
-        then return $ respond render (Error status405 Nothing) [(allow, validMethods)]
+        then return $ respond render e405 [(allow, validMethods)]
         else evalAll ms
   where
     allow :: HeaderName

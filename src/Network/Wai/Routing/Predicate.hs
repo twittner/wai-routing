@@ -9,10 +9,9 @@
 -- @wai-predicates@.
 module Network.Wai.Routing.Predicate where
 
+import Control.Monad (when)
 import Data.ByteString (ByteString)
 import Data.ByteString.From
-import Data.Monoid
-import Network.HTTP.Types
 import Network.Wai.Predicate
 import Network.Wai.Predicate.Request
 import Network.Wai.Predicate.Utility
@@ -21,15 +20,16 @@ import Network.Wai.Routing.Request
 -- | Request path parameters.
 capture :: (HasCaptures r, FromByteString a) => ByteString -> Predicate r Error a
 capture k r = case lookupCapture k r of
-    [] -> Fail (err status400 ("Missing path parameter '" <> k <> "'."))
-    cc -> either (Fail . err status400) return (readValues cc)
+    [] -> Fail $ e400 & addLabel "path" . setReason NotAvailable . setSource k
+    cc -> either (\m -> Fail $ e400 & addLabel "path" . setReason TypeError . setSource k . setMessage m)
+                 return
+                 (readValues cc)
 
 -- | Request path parameters.
 hasCapture :: (HasCaptures r) => ByteString -> Predicate r Error ()
 hasCapture k r =
-    if null (lookupCapture k r)
-        then Fail (err status400 ("Missing path parameter '" <> k <> "'."))
-        else return ()
+    when (null (lookupCapture k r)) $
+        Fail (e400 & addLabel "path" . setReason NotAvailable . setSource k)
 
 -- | @param \"foo\"@ is equivalent to @query \"foo\" .|. capture \"foo\"@
 param :: (HasCaptures r, HasQuery r, FromByteString a) => ByteString -> Predicate r Error a
