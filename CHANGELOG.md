@@ -1,3 +1,8 @@
+0.8
+-----------------------------------------------------------------------------
+- Update to `wai-predicates 0.6` and change default error renderer.
+- Update `bytestring-from` dependency.
+
 0.7
 -----------------------------------------------------------------------------
 - Update dependencies constraints.
