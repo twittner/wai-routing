@@ -115,3 +115,17 @@ test-suite wai-routing-tests
       , wai-predicates
       , wai-routing
 
+benchmark wai-routing-bench
+    type:             exitcode-stdio-1.0
+    default-language: Haskell2010
+    main-is:          Bench.hs
+    hs-source-dirs:   bench
+    ghc-options:      -Wall -O2 -fwarn-tabs
+    build-depends:
+        base          == 4.*
+      , criterion     == 0.8.*
+      , http-types
+      , wai
+      , wai-predicates
+      , wai-routing
+
