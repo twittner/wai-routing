@@ -10,6 +10,7 @@ module Network.Wai.Routing.Route
     , Meta (..)
     , prepare
     , route
+    , routeK
     , addRoute
     , attach
     , examine
@@ -161,8 +162,7 @@ examine :: Routes a m b -> [Meta a]
 examine (Routes r) = let St rr _ = execState r zero in
     mapMaybe (\x -> Meta (_method x) (_path x) <$> _meta x) rr
 
--- | A WAI 'Application' (generalised from 'IO' to 'Monad') which
--- routes requests to handlers based on predicated route declarations.
+-- | Routes requests to handlers based on predicated route declarations.
 route :: Monad m => [(ByteString, RoutingReq -> m Response)] -> Request -> m Response
 route rm rq = do
     let tr = Tree.fromList rm
@@ -171,6 +171,10 @@ route rm rq = do
         Nothing     -> return notFound
   where
     notFound = responseLBS status404 [] ""
+
+-- | Like 'route' but passes the result to the provided continuation.
+routeK :: Monad m => [(ByteString, RoutingReq -> m Response)] -> Request -> (Response -> m a) -> m a
+routeK rm rq k = route rm rq >>= k
 
 -- | Run the 'Routes' monad and return the handlers per path.
 prepare :: Monad m => Routes a m b -> [(ByteString, RoutingReq -> m Response)]

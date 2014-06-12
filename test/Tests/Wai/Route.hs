@@ -24,6 +24,8 @@ import Tests.Wai.Util
 
 import qualified Data.ByteString.Lazy as Lazy
 
+type App m = Request -> m Response
+
 tests :: TestTree
 tests = testGroup "Network.Wai.Routing"
     [ testCase "Sitemap" testSitemap
@@ -112,7 +114,7 @@ handlerH :: Lazy.ByteString ::: Int -> IO Response
 handlerH (user ::: age) = writeText $
     "user = " <> user <> ", age = " <> fromString (show age)
 
-testEndpointA :: Application -> Assertion
+testEndpointA :: App IO -> Assertion
 testEndpointA f = do
     let rq = defaultRequest { rawPathInfo = "/a" }
 
@@ -129,7 +131,7 @@ testEndpointA f = do
     status200 @=? responseStatus rs3
 
 
-testEndpointB :: Application -> Assertion
+testEndpointB :: App IO -> Assertion
 testEndpointB f = do
     let rq = defaultRequest { rawPathInfo = "/b" }
 
@@ -146,7 +148,7 @@ testEndpointB f = do
     "123" @=? responseBody rs2
 
 
-testEndpointC :: Application -> Assertion
+testEndpointC :: App IO -> Assertion
 testEndpointC f = do
     let rq = defaultRequest { rawPathInfo = "/c" }
 
@@ -163,7 +165,7 @@ testEndpointC f = do
     "'foo' type-error [query] -- Failed reading: Invalid Int" @=? responseBody rs2
 
 
-testEndpointD :: Application -> Assertion
+testEndpointD :: App IO -> Assertion
 testEndpointD f = do
     let rq = defaultRequest { rawPathInfo = "/d" }
 
@@ -180,7 +182,7 @@ testEndpointD f = do
     "'foo' type-error [query] -- Failed reading: Invalid Int" @=? responseBody rs2
 
 
-testEndpointE :: Application -> Assertion
+testEndpointE :: App IO -> Assertion
 testEndpointE f = do
     let rq = defaultRequest { rawPathInfo = "/e" }
 
@@ -197,7 +199,7 @@ testEndpointE f = do
     "'foo' type-error [header] -- Failed reading: Invalid Int" @=? responseBody rs2
 
 
-testEndpointF :: Application -> Assertion
+testEndpointF :: App IO -> Assertion
 testEndpointF f = do
     let rq = defaultRequest { rawPathInfo = "/f" }
 
@@ -206,7 +208,7 @@ testEndpointF f = do
     "10"      @=? responseBody rs0
 
 
-testEndpointH :: Application -> Assertion
+testEndpointH :: App IO -> Assertion
 testEndpointH f = do
     let rq = defaultRequest { rawPathInfo = "/h" }
 
