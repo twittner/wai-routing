@@ -2,8 +2,9 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE GADTs             #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE GADTs               #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Network.Wai.Routing.Route
     ( Routes
@@ -40,7 +41,7 @@ import Data.List hiding (head, delete)
 import Data.Maybe (fromMaybe, mapMaybe, catMaybes)
 import Data.Monoid
 import Network.HTTP.Types
-import Network.Wai (Request, Response, ResponseReceived, responseLBS, responseBuilder, rawPathInfo)
+import Network.Wai
 import Network.Wai.Predicate
 import Network.Wai.Predicate.Request
 import Network.Wai.Routing.Request
@@ -63,11 +64,12 @@ data Handler m = Handler
     }
 
 data Pack m where
-    Pack :: Predicate RoutingReq Error a -> TApp a m -> Pack m
+    Pack :: Predicate RoutingReq Error a
+         -> (a -> Continue m -> m ResponseReceived)
+         -> Pack m
 
 type Continue m = Response -> m ResponseReceived
 type App      m = RoutingReq -> Continue m -> m ResponseReceived
-type TApp a   m = a          -> Continue m -> m ResponseReceived
 
 -- | Function to turn an 'Error' value into a 'Lazy.ByteString'.
 -- Clients can provide their own renderer using 'renderer'.
@@ -132,9 +134,9 @@ instance Monad (Routes a m) where
 -- captures) and constrained by some 'Predicate'.
 addRoute :: Monad m
          => Method
-         -> ByteString                   -- ^ path
-         -> TApp a m                     -- ^ handler
-         -> Predicate RoutingReq Error a -- ^ 'Predicate'
+         -> ByteString                              -- ^ path
+         -> (a -> Continue m -> m ResponseReceived) -- ^ handler
+         -> Predicate RoutingReq Error a            -- ^ 'Predicate'
          -> Routes b m ()
 addRoute m r x p = Routes . modify $ \s ->
     s { routes = Route m r Nothing (Pack p x) : routes s }
@@ -142,9 +144,9 @@ addRoute m r x p = Routes . modify $ \s ->
 -- | Specialisation of 'addRoute' for a specific HTTP 'Method'.
 get, head, post, put, delete, trace, options, connect, patch ::
     Monad m
-    => ByteString                   -- ^ path
-    -> TApp a m                     -- ^ handler
-    -> Predicate RoutingReq Error a -- ^ 'Predicate'
+    => ByteString                              -- ^ path
+    -> (a -> Continue m -> m ResponseReceived) -- ^ handler
+    -> Predicate RoutingReq Error a            -- ^ 'Predicate'
     -> Routes b m ()
 get     = addRoute (renderStdMethod GET)
 head    = addRoute (renderStdMethod HEAD)
@@ -180,6 +182,7 @@ route rm rq k = do
 
 continue :: Monad m => (a -> m Response) -> a -> Continue m -> m ResponseReceived
 continue f a k = f a >>= k
+{-# INLINE continue #-}
 
 -- | Run the 'Routes' monad and return the handlers per path.
 prepare :: Monad m => Routes a m b -> [(ByteString, App m)]
@@ -216,37 +219,37 @@ normalise rr =
 -- (2) Evaluate 'Route' predicates.
 -- (3) Pick the first one which is 'Good', or else respond with status
 --     and message of the first one.
-select :: Monad m => Renderer -> [Route a m] -> App m
+select :: forall a m. Monad m => Renderer -> [Route a m] -> App m
 select render rr req k = do
     let ms = filter ((method req ==) . _method) rr
     if null ms
         then k $ respond render e405 [(allow, validMethods)]
         else evalAll ms
   where
-    allow :: HeaderName
-    allow = mk "Allow"
-
-    validMethods :: ByteString
-    validMethods = C.intercalate "," $ nub (C.pack . show . _method <$> rr)
-
-    -- evalAll :: Monad m => [Route a m] -> m ResponseReceived
+    evalAll :: Monad m => [Route a m] -> m ResponseReceived
     evalAll rs =
         let (n, y) = partitionEithers $ foldl' evalSingle [] rs
         in if null y
             then k $ respond render (L.head n) []
             else closest y
 
-    -- evalSingle :: Monad m => [Either Error (Handler m)] -> Route a m -> [Either Error (Handler m)]
+    evalSingle :: Monad m => [Either Error (Handler m)] -> Route a m -> [Either Error (Handler m)]
     evalSingle rs r =
         case _pred r of
             Pack p h -> case p req of
                 Fail   m -> Left m : rs
                 Okay d v -> Right (Handler d (h v k)) : rs
 
-    -- closest :: Monad m => [Handler m] -> m ResponseReceived
+    closest :: Monad m => [Handler m] -> m ResponseReceived
     closest hh = case map _handler . sortBy (compare `on` _delta) $ hh of
         []  -> k $ responseBuilder status404 [] mempty
         h:_ -> h
+
+    validMethods :: ByteString
+    validMethods = C.intercalate "," $ nub (C.pack . show . _method <$> rr)
+
+allow :: HeaderName
+allow = mk "Allow"
 
 respond :: Renderer -> Error -> ResponseHeaders -> Response
 respond f e h = responseLBS (status e) h (fromMaybe mempty (f e))

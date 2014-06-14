@@ -29,10 +29,12 @@ instance FromByteString Op where
         _   -> fail $ "Invalid operation: " ++ show c
 
 main :: IO ()
-main = run 8080 $ logStdout (routeK (prepare start))
+main = run 8080 $ logStdout (route (prepare start))
 
 start :: Monad m => Routes a m ()
-start = get "eval" eval (query "x" .&. query "y" .&. query "f")
+start =
+    get "eval" (continue eval) $
+        query "x" .&. query "y" .&. query "f"
 
 eval :: Monad m => Int ::: Int ::: Op -> m Response
 eval (x ::: y ::: f) = respond status200 . fromString . show $

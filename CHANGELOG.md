@@ -1,3 +1,7 @@
+0.9
+-----------------------------------------------------------------------------
+- Update to WAI 3.0.x and honour the new CPS definition of `Application`.
+
 0.8
 -----------------------------------------------------------------------------
 - Update to `wai-predicates 0.6` and change default error renderer.

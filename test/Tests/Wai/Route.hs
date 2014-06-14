@@ -8,7 +8,6 @@
 
 module Tests.Wai.Route (tests) where
 
-import Control.Monad.Trans.Cont
 import Data.ByteString (ByteString)
 import Data.Monoid
 import Data.String
@@ -52,7 +51,7 @@ testSitemap = do
 
 sitemap :: Routes Int IO ()
 sitemap = do
-    get "/a" (\k -> runContT (handlerA k)) $
+    get "/a" (continue handlerA) $
         accept "application" "json" .&. (query "name" .|. query "nick") .&. query "foo"
 
     attach 0
@@ -91,8 +90,8 @@ sitemap = do
 
     attach 7
 
-handlerA :: Media "application" "json" ::: Int ::: ByteString -> ContT ResponseReceived IO Response
-handlerA (_ ::: i ::: _) = return $ responseLBS status200 [] (fromString . show $ i)
+handlerA :: Media "application" "json" ::: Int ::: ByteString -> IO Response
+handlerA (_ ::: i ::: _) = writeText (fromString . show $ i)
 
 handlerB :: Int -> Continue IO -> IO ResponseReceived
 handlerB baz k = k $ responseLBS status200 [] (fromString . show $ baz)

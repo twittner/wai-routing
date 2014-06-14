@@ -36,14 +36,14 @@ description:
     >import Network.Wai.Handler.Warp
     >
     >main :: IO ()
-    >main = run 8080 (routeK (prepare start))
+    >main = run 8080 (route (prepare start))
     >
     >start :: Monad m => Routes a m ()
     >start = do
-    >    get "/user/:name" fetchUser $
+    >    get "/user/:name" (continue fetchUser) $
     >        capture "name"
     >
-    >    get "/user/find" findUser $
+    >    get "/user/find" (continue findUser) $
     >        query "byName" ||| query "byId"
     >
     >    delete "/user/:name" rmUser $
@@ -56,8 +56,8 @@ description:
     >findUser (Left  name)  = ...
     >findUser (Right ident) = ...
     >
-    >rmUser :: Monad m => Text ::: Maybe Int -> m Response
-    >rmUser (name ::: foo)  = ...
+    >rmUser :: Monad m => Text ::: Maybe Int -> Continue m -> m ResponseReceived
+    >rmUser (name ::: foo) k = k $ ...
 
 source-repository head
     type:             git
@@ -111,7 +111,6 @@ test-suite wai-routing-tests
       , tasty            >= 0.8
       , tasty-hunit      >= 0.8
       , tasty-quickcheck >= 0.8
-      , transformers     >= 0.3
       , wai
       , wai-predicates
       , wai-routing
