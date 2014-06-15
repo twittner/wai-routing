@@ -2,8 +2,10 @@
 
 module Tests.Wai.Util where
 
+import Control.Monad (void)
 import Data.ByteString (ByteString)
 import Data.CaseInsensitive (CI)
+import Data.IORef
 import Network.Wai
 import Network.Wai.Internal
 import Network.HTTP.Types
@@ -29,3 +31,9 @@ responseBody _                       = ""
 
 writeText :: Lazy.ByteString -> IO Response
 writeText = return . responseLBS status200 []
+
+apply :: (a -> (Response -> IO ResponseReceived) -> IO ResponseReceived) -> a -> IO Response
+apply f r = do
+    ref <- newIORef undefined
+    void $ f r $ \x -> writeIORef ref x >> return ResponseReceived
+    readIORef ref

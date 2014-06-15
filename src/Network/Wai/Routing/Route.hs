@@ -2,14 +2,18 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE GADTs             #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE GADTs               #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Network.Wai.Routing.Route
     ( Routes
+    , App
+    , Continue
     , Meta (..)
     , prepare
     , route
+    , continue
     , addRoute
     , attach
     , examine
@@ -37,7 +41,7 @@ import Data.List hiding (head, delete)
 import Data.Maybe (fromMaybe, mapMaybe, catMaybes)
 import Data.Monoid
 import Network.HTTP.Types
-import Network.Wai (Request, Response, responseLBS, responseBuilder, rawPathInfo)
+import Network.Wai
 import Network.Wai.Predicate
 import Network.Wai.Predicate.Request
 import Network.Wai.Routing.Request
@@ -56,11 +60,20 @@ data Route a m = Route
 
 data Handler m = Handler
     { _delta   :: !Double
-    , _handler :: m Response
+    , _handler :: m ResponseReceived
     }
 
 data Pack m where
-    Pack :: Predicate RoutingReq Error a -> (a -> m Response) -> Pack m
+    Pack :: Predicate RoutingReq Error a
+         -> (a -> Continue m -> m ResponseReceived)
+         -> Pack m
+
+-- | The WAI 3.0 application continuation for arbitrary @m@ instead of @IO@.
+type Continue m = Response -> m ResponseReceived
+
+-- | Similar to a WAI 'Application' but for 'RoutingReq' and not specific
+-- to @IO@.
+type App m = RoutingReq -> Continue m -> m ResponseReceived
 
 -- | Function to turn an 'Error' value into a 'Lazy.ByteString'.
 -- Clients can provide their own renderer using 'renderer'.
@@ -123,11 +136,16 @@ instance Monad (Routes a m) where
 
 -- | Add a route for some 'Method' and path (potentially with variable
 -- captures) and constrained by some 'Predicate'.
+--
+-- A route handler is like a WAI 'Application' but instead of 'Request'
+-- the first parameter is the result-type of the associated 'Predicate'
+-- evaluation. I.e. the handler is applied to the predicate's metadata
+-- value iff the predicate is true.
 addRoute :: Monad m
          => Method
-         -> ByteString                   -- ^ path
-         -> (a -> m Response)            -- ^ handler
-         -> Predicate RoutingReq Error a -- ^ 'Predicate'
+         -> ByteString                              -- ^ path
+         -> (a -> Continue m -> m ResponseReceived) -- ^ handler
+         -> Predicate RoutingReq Error a            -- ^ 'Predicate'
          -> Routes b m ()
 addRoute m r x p = Routes . modify $ \s ->
     s { routes = Route m r Nothing (Pack p x) : routes s }
@@ -135,9 +153,9 @@ addRoute m r x p = Routes . modify $ \s ->
 -- | Specialisation of 'addRoute' for a specific HTTP 'Method'.
 get, head, post, put, delete, trace, options, connect, patch ::
     Monad m
-    => ByteString                   -- ^ path
-    -> (a -> m Response)            -- ^ handler
-    -> Predicate RoutingReq Error a -- ^ 'Predicate'
+    => ByteString                              -- ^ path
+    -> (a -> Continue m -> m ResponseReceived) -- ^ handler
+    -> Predicate RoutingReq Error a            -- ^ 'Predicate'
     -> Routes b m ()
 get     = addRoute (renderStdMethod GET)
 head    = addRoute (renderStdMethod HEAD)
@@ -161,19 +179,39 @@ examine :: Routes a m b -> [Meta a]
 examine (Routes r) = let St rr _ = execState r zero in
     mapMaybe (\x -> Meta (_method x) (_path x) <$> _meta x) rr
 
--- | A WAI 'Application' (generalised from 'IO' to 'Monad') which
--- routes requests to handlers based on predicated route declarations.
-route :: Monad m => [(ByteString, RoutingReq -> m Response)] -> Request -> m Response
-route rm rq = do
+-- | Routes requests to handlers based on predicated route declarations.
+-- Note that @route (prepare ...)@ behaves like a WAI 'Application' generalised to
+-- arbitrary monads.
+route :: Monad m => [(ByteString, App m)] -> Request -> Continue m -> m ResponseReceived
+route rm rq k = do
     let tr = Tree.fromList rm
     case Tree.lookup tr (Tree.segments $ rawPathInfo rq) of
-        Just (f, v) -> f (fromReq v (fromRequest rq))
-        Nothing     -> return notFound
+        Just (f, v) -> f (fromReq v (fromRequest rq)) k
+        Nothing     -> k notFound
   where
     notFound = responseLBS status404 [] ""
 
+-- | Prior to WAI 3.0 applications returned a plain 'Response'. @continue@
+-- turns such a function into a corresponding CPS version. For example:
+--
+-- @
+-- sitemap :: Monad m => Routes a m ()
+-- sitemap = do
+--     get "\/f\/:foo" (/continue/ f) $ capture "foo"
+--     get "\/g\/:foo" g            $ capture "foo"
+--
+-- f :: Monad m => Int -> m Response
+-- f x = ...
+--
+-- g :: Monad m => Int -> Continue m -> m ResponseReceived
+-- g x k = k $ ...
+-- @
+continue :: Monad m => (a -> m Response) -> a -> Continue m -> m ResponseReceived
+continue f a k = f a >>= k
+{-# INLINE continue #-}
+
 -- | Run the 'Routes' monad and return the handlers per path.
-prepare :: Monad m => Routes a m b -> [(ByteString, RoutingReq -> m Response)]
+prepare :: Monad m => Routes a m b -> [(ByteString, App m)]
 prepare (Routes rr) =
     let s = execState rr zero in
     map (\g -> (_path (L.head g), select (renderfn s) g)) (normalise (routes s))
@@ -207,37 +245,37 @@ normalise rr =
 -- (2) Evaluate 'Route' predicates.
 -- (3) Pick the first one which is 'Good', or else respond with status
 --     and message of the first one.
-select :: Monad m => Renderer -> [Route a m] -> RoutingReq -> m Response
-select render rr req = do
+select :: forall a m. Monad m => Renderer -> [Route a m] -> App m
+select render rr req k = do
     let ms = filter ((method req ==) . _method) rr
     if null ms
-        then return $ respond render e405 [(allow, validMethods)]
+        then k $ respond render e405 [(allow, validMethods)]
         else evalAll ms
   where
-    allow :: HeaderName
-    allow = mk "Allow"
-
-    validMethods :: ByteString
-    validMethods = C.intercalate "," $ nub (C.pack . show . _method <$> rr)
-
-    evalAll :: Monad m => [Route a m] -> m Response
+    evalAll :: [Route a m] -> m ResponseReceived
     evalAll rs =
         let (n, y) = partitionEithers $ foldl' evalSingle [] rs
         in if null y
-            then return $ respond render (L.head n) []
+            then k $ respond render (L.head n) []
             else closest y
 
-    evalSingle :: Monad m => [Either Error (Handler m)] -> Route a m -> [Either Error (Handler m)]
+    evalSingle :: [Either Error (Handler m)] -> Route a m -> [Either Error (Handler m)]
     evalSingle rs r =
         case _pred r of
             Pack p h -> case p req of
                 Fail   m -> Left m : rs
-                Okay d v -> Right (Handler d (h v)) : rs
+                Okay d v -> Right (Handler d (h v k)) : rs
 
-    closest :: Monad m => [Handler m] -> m Response
+    closest :: [Handler m] -> m ResponseReceived
     closest hh = case map _handler . sortBy (compare `on` _delta) $ hh of
-        []  -> return $ responseBuilder status404 [] mempty
+        []  -> k $ responseBuilder status404 [] mempty
         h:_ -> h
+
+    validMethods :: ByteString
+    validMethods = C.intercalate "," $ nub (C.pack . show . _method <$> rr)
+
+allow :: HeaderName
+allow = mk "Allow"
 
 respond :: Renderer -> Error -> ResponseHeaders -> Response
 respond f e h = responseLBS (status e) h (fromMaybe mempty (f e))
