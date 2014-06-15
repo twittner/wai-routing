@@ -1,6 +1,8 @@
 0.9
 -----------------------------------------------------------------------------
-- Update to WAI 3.0.x and honour the new CPS definition of `Application`.
+- Update to WAI 3.0.x and honour the new CPS definition of `Application`
+  (cf. the documentation of `Network.Wai.Routing.Route.continue` for details
+  regarding the differences between old and new style handler types).
 
 0.8
 -----------------------------------------------------------------------------
