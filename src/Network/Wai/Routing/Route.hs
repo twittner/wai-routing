@@ -68,8 +68,12 @@ data Pack m where
          -> (a -> Continue m -> m ResponseReceived)
          -> Pack m
 
+-- | The WAI 3.0 application continuation for arbitrary @m@ instead of @IO@.
 type Continue m = Response -> m ResponseReceived
-type App      m = RoutingReq -> Continue m -> m ResponseReceived
+
+-- | Similar to a WAI 'Application' but for 'RoutingReq' and not specific
+-- to @IO@.
+type App m = RoutingReq -> Continue m -> m ResponseReceived
 
 -- | Function to turn an 'Error' value into a 'Lazy.ByteString'.
 -- Clients can provide their own renderer using 'renderer'.
@@ -132,6 +136,11 @@ instance Monad (Routes a m) where
 
 -- | Add a route for some 'Method' and path (potentially with variable
 -- captures) and constrained by some 'Predicate'.
+--
+-- A route handler is like a WAI 'Application' but instead of 'Request'
+-- the first parameter is the result-type of the associated 'Predicate'
+-- evaluation. I.e. the handler is applied to the predicate's metadata
+-- value iff the predicate is true.
 addRoute :: Monad m
          => Method
          -> ByteString                              -- ^ path
@@ -171,6 +180,8 @@ examine (Routes r) = let St rr _ = execState r zero in
     mapMaybe (\x -> Meta (_method x) (_path x) <$> _meta x) rr
 
 -- | Routes requests to handlers based on predicated route declarations.
+-- Note that @route (prepare ...)@ behaves like a WAI 'Application' generalised to
+-- arbitrary monads.
 route :: Monad m => [(ByteString, App m)] -> Request -> Continue m -> m ResponseReceived
 route rm rq k = do
     let tr = Tree.fromList rm
@@ -180,6 +191,21 @@ route rm rq k = do
   where
     notFound = responseLBS status404 [] ""
 
+-- | Prior to WAI 3.0 applications returned a plain 'Response'. @continue@
+-- turns such a function into a corresponding CPS version. For example:
+--
+-- @
+-- sitemap :: Monad m => Routes a m ()
+-- sitemap = do
+--     get "\/f\/:foo" (/continue/ f) $ capture "foo"
+--     get "\/g\/:foo" g            $ capture "foo"
+--
+-- f :: Monad m => Int -> m Response
+-- f x = ...
+--
+-- g :: Monad m => Int -> Continue m -> m ResponseReceived
+-- g x k = k $ ...
+-- @
 continue :: Monad m => (a -> m Response) -> a -> Continue m -> m ResponseReceived
 continue f a k = f a >>= k
 {-# INLINE continue #-}
@@ -226,21 +252,21 @@ select render rr req k = do
         then k $ respond render e405 [(allow, validMethods)]
         else evalAll ms
   where
-    evalAll :: Monad m => [Route a m] -> m ResponseReceived
+    evalAll :: [Route a m] -> m ResponseReceived
     evalAll rs =
         let (n, y) = partitionEithers $ foldl' evalSingle [] rs
         in if null y
             then k $ respond render (L.head n) []
             else closest y
 
-    evalSingle :: Monad m => [Either Error (Handler m)] -> Route a m -> [Either Error (Handler m)]
+    evalSingle :: [Either Error (Handler m)] -> Route a m -> [Either Error (Handler m)]
     evalSingle rs r =
         case _pred r of
             Pack p h -> case p req of
                 Fail   m -> Left m : rs
                 Okay d v -> Right (Handler d (h v k)) : rs
 
-    closest :: Monad m => [Handler m] -> m ResponseReceived
+    closest :: [Handler m] -> m ResponseReceived
     closest hh = case map _handler . sortBy (compare `on` _delta) $ hh of
         []  -> k $ responseBuilder status404 [] mempty
         h:_ -> h
