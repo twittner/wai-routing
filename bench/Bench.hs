@@ -12,16 +12,17 @@ import Criterion.Main
 import Criterion.Config
 import Network.HTTP.Types hiding (ok200)
 import Network.Wai
+import Network.Wai.Internal (ResponseReceived (..))
 import Network.Wai.Predicate
 import Network.Wai.Routing
 
 sitemap :: Routes a IO ()
 sitemap = do
-    get "/a" handlerA (query "foo")
-    get "/b" handlerB (query "foo" .&. query "bar")
-    get "/c" handlerC (query "foo" .&. query "bar" .&. query "baz")
-    get "/d" handlerD (query "foo" .&. query "bar" .&. query "baz" .&. query "zoo")
-    get "/z" handlerZ $
+    get "/a" (continue handlerA) (query "foo")
+    get "/b" (continue handlerB) (query "foo" .&. query "bar")
+    get "/c" (continue handlerC) (query "foo" .&. query "bar" .&. query "baz")
+    get "/d" (continue handlerD) (query "foo" .&. query "bar" .&. query "baz" .&. query "zoo")
+    get "/z" (continue handlerZ) $
           query "foo"
       .&. query "bar"
       .&. query "baz"
@@ -98,5 +99,6 @@ main = defaultMainWith defaultConfig (return ())
         ]
     ]
   where
-    f = route (prepare sitemap)
+    f rq = route (prepare sitemap) rq rs
+    rs   = const (return ResponseReceived)
 
