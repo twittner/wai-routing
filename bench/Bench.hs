@@ -8,8 +8,8 @@
 
 module Main (main) where
 
+import Criterion
 import Criterion.Main
-import Criterion.Config
 import Network.HTTP.Types hiding (ok200)
 import Network.Wai
 import Network.Wai.Internal (ResponseReceived (..))
@@ -84,7 +84,7 @@ reqDOk = reqDBad { queryString = ("zoo", Just "1") : queryString reqCOk }
 reqZOk = reqZBad { queryString = ("x8", Just "42") : queryString reqZBad }
 
 main :: IO ()
-main = defaultMainWith defaultConfig (return ())
+main = defaultMain
     [ bgroup "bench"
         [ bench "a - ok"  (whnfIO $ f reqAOk)
         , bench "a - bad" (whnfIO $ f reqABad)
@@ -101,4 +101,3 @@ main = defaultMainWith defaultConfig (return ())
   where
     f rq = route (prepare sitemap) rq rs
     rs   = const (return ResponseReceived)
-

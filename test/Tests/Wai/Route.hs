@@ -9,6 +9,7 @@
 module Tests.Wai.Route (tests) where
 
 import Data.ByteString (ByteString)
+import Data.ByteString.Conversion
 import Data.Monoid
 import Data.String
 import Network.HTTP.Types
@@ -17,7 +18,6 @@ import Network.Wai.Predicate
 import Network.Wai.Predicate.Request
 import Network.Wai.Routing
 import Network.Wai.Routing.Request
-import Test.HUnit hiding (Test)
 import Test.Tasty
 import Test.Tasty.HUnit
 import Tests.Wai.Util
@@ -105,8 +105,8 @@ handlerD foo = writeText (fromString . show $ foo)
 handlerE :: Int -> IO Response
 handlerE foo = writeText (fromString . show $ foo)
 
-handlerF :: [Int] -> IO Response
-handlerF foo = writeText (fromString . show . sum $ foo)
+handlerF :: List Int -> IO Response
+handlerF foo = writeText (fromString . show . sum . fromList $ foo)
 
 handlerG :: () -> IO Response
 handlerG = const $ writeText "all good"
