@@ -1,3 +1,8 @@
+0.10
+-----------------------------------------------------------------------------
+- Replace `bytestring-from` with `bytestring-conversion` and update test
+  dependencies.
+
 0.9.1
 -----------------------------------------------------------------------------
 - Bugfix release (benchmarks)

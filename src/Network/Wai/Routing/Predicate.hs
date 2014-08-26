@@ -11,7 +11,7 @@ module Network.Wai.Routing.Predicate where
 
 import Control.Monad (when)
 import Data.ByteString (ByteString)
-import Data.ByteString.From
+import Data.ByteString.Conversion
 import Network.Wai.Predicate
 import Network.Wai.Predicate.Request
 import Network.Wai.Predicate.Utility
