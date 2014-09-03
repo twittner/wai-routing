@@ -30,6 +30,7 @@ tests :: TestTree
 tests = testGroup "Network.Wai.Routing"
     [ testCase "Sitemap" testSitemap
     , testCase "Media Selection" testMedia
+    , testCase "Custom Error Renderer" testErrorRenderer
     ]
 
 testSitemap :: IO ()
@@ -250,3 +251,24 @@ expectMedia h res m = do
     let rq = defaultRequest { rawPathInfo = "/media" }
     rs <- apply m $ fromReq [] . fromRequest . withHeader "Accept" h $ rq
     Lazy.fromStrict res @=? responseBody rs
+
+-------------------------------------------------------------------------------
+-- Custom Error Renderer Tests
+
+testErrorRenderer :: IO ()
+testErrorRenderer = do
+    let [(_, h)] = prepare sitemapErrorRenderer
+    let rq = defaultRequest { rawPathInfo = "/error" }
+    rs <- apply h $ fromReq [] . fromRequest $ rq
+    status400 @=? responseStatus rs
+    Just "application/json" @=? lookup "Content-Type" (responseHeaders rs)
+    "{\"error\":\"foo\"}" @=? responseBody rs
+
+sitemapErrorRenderer :: Routes a IO ()
+sitemapErrorRenderer = do
+    let f r = ("{\"error\":\"" <> r <> "\"}", [("Content-Type", "application/json")])
+    renderer $ fmap (f . Lazy.fromStrict) . source
+    get "/error" (continue handler) $ query "foo"
+  where
+    handler :: Int -> IO Response
+    handler = const . return $ responseLBS status200 [] ""
