@@ -260,13 +260,13 @@ testErrorRenderer = do
     let [(_, h)] = prepare sitemapErrorRenderer
     let rq = defaultRequest { rawPathInfo = "/error" }
     rs <- apply h $ fromReq [] . fromRequest $ rq
-    status400 @=? responseStatus rs
-    Just "application/json" @=? lookup "Content-Type" (responseHeaders rs)
-    "{\"error\":\"foo\"}" @=? responseBody rs
+    status400               @=? responseStatus rs
+    Just "application/json" @=? lookup hContentType (responseHeaders rs)
+    "{\"error\":\"foo\"}"   @=? responseBody rs
 
 sitemapErrorRenderer :: Routes a IO ()
 sitemapErrorRenderer = do
-    let f r = ("{\"error\":\"" <> r <> "\"}", [("Content-Type", "application/json")])
+    let f r = ("{\"error\":\"" <> r <> "\"}", [(hContentType, "application/json")])
     renderer $ fmap (f . Lazy.fromStrict) . source
     get "/error" (continue handler) $ query "foo"
   where
