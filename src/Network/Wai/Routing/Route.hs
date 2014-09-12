@@ -34,11 +34,10 @@ import Control.Applicative hiding (Const)
 import Control.Monad
 import Control.Monad.Trans.State.Strict hiding (get, put)
 import Data.ByteString (ByteString)
-import Data.CaseInsensitive (mk)
 import Data.Either
 import Data.Function
 import Data.List hiding (head, delete)
-import Data.Maybe (fromMaybe, mapMaybe, catMaybes)
+import Data.Maybe (mapMaybe, catMaybes)
 import Data.Monoid
 import Network.HTTP.Types
 import Network.Wai
@@ -75,9 +74,10 @@ type Continue m = Response -> m ResponseReceived
 -- to @IO@.
 type App m = RoutingReq -> Continue m -> m ResponseReceived
 
--- | Function to turn an 'Error' value into a 'Lazy.ByteString'.
+-- | Function to turn an 'Error' value into a 'Lazy.ByteString'
+-- to send as the response body and a list of additional response headers.
 -- Clients can provide their own renderer using 'renderer'.
-type Renderer = Error -> Maybe Lazy.ByteString
+type Renderer = Error -> Maybe (Lazy.ByteString, ResponseHeaders)
 
 -- | Data added to a route via 'attach' is returned in this @Meta@ record.
 data Meta a = Meta
@@ -100,7 +100,7 @@ defRenderer e =
         x = case catMaybes [s, r, l] of
                [] -> Nothing
                xs -> Just (Lazy.intercalate " " xs)
-    in maybe x (\y -> (<> (" -- " <> y)) <$> x) m
+    in plainText <$> maybe x (\y -> (<> (" -- " <> y)) <$> x) m
   where
     reason2str  NotAvailable = "not-available"
     reason2str  TypeError    = "type-error"
@@ -108,6 +108,7 @@ defRenderer e =
     message2str s  = Lazy.fromStrict s
     labels2str  [] = Nothing
     labels2str  xs = Just $ "[" <> Lazy.intercalate "," xs <> "]"
+    plainText    s = (s, [(hContentType, "text/plain")])
 
 -- | The Routes monad state type.
 data St a m = St
@@ -189,7 +190,7 @@ route rm rq k = do
         Just (f, v) -> f (fromReq v (fromRequest rq)) k
         Nothing     -> k notFound
   where
-    notFound = responseLBS status404 [] ""
+    notFound = responseLBS status404 [] Lazy.empty
 
 -- | Prior to WAI 3.0 applications returned a plain 'Response'. @continue@
 -- turns such a function into a corresponding CPS version. For example:
@@ -275,8 +276,9 @@ select render rr req k = do
     validMethods = C.intercalate "," $ nub (C.pack . show . _method <$> rr)
 
 allow :: HeaderName
-allow = mk "Allow"
+allow = "Allow"
 
 respond :: Renderer -> Error -> ResponseHeaders -> Response
-respond f e h = responseLBS (status e) h (fromMaybe mempty (f e))
-
+respond f e r = case f e of
+    Just (b, h) -> responseLBS (status e) (r ++ h) b
+    Nothing     -> responseLBS (status e) r Lazy.empty
