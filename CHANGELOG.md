@@ -1,3 +1,9 @@
+0.11
+-----------------------------------------------------------------------------
+- Change error renderer to return text and optionally additional response
+  headers (Roman Borschel).
+- Update upper bounds.
+
 0.10.2
 -----------------------------------------------------------------------------
 - Update `bytestring-conversion` to version 0.2
