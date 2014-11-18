@@ -6,7 +6,7 @@
 module Main (main) where
 
 import Data.Attoparsec.ByteString.Char8
-import Data.ByteString.From
+import Data.ByteString.Conversion
 import Data.String
 import Network.HTTP.Types
 import Network.Wai

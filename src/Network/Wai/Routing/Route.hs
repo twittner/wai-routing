@@ -2,6 +2,7 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -184,8 +185,7 @@ examine (Routes r) = let St rr _ = execState r zero in
 -- Note that @route (prepare ...)@ behaves like a WAI 'Application' generalised to
 -- arbitrary monads.
 route :: Monad m => [(ByteString, App m)] -> Request -> Continue m -> m ResponseReceived
-route rm rq k = do
-    let tr = Tree.fromList rm
+route rm = let !tr = Tree.fromList rm in \rq k ->
     case Tree.lookup tr (Tree.segments $ rawPathInfo rq) of
         Just (f, v) -> f (fromReq v (fromRequest rq)) k
         Nothing     -> k notFound

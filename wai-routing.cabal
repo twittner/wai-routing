@@ -1,5 +1,5 @@
 name:                wai-routing
-version:             0.11
+version:             0.11.1
 synopsis:            Declarative routing for WAI.
 license:             OtherLicense
 license-file:        LICENSE
