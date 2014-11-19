@@ -1,5 +1,5 @@
 name:                wai-routing
-version:             0.11.1
+version:             0.12
 synopsis:            Declarative routing for WAI.
 license:             OtherLicense
 license-file:        LICENSE
@@ -86,7 +86,7 @@ library
       , transformers          >= 0.3   && < 0.5
       , wai                   >= 3.0   && < 4.0
       , wai-predicates        == 0.8.*
-      , wai-route             == 0.2.*
+      , wai-route             == 0.3.*
 
 test-suite wai-routing-tests
     type:             exitcode-stdio-1.0
@@ -106,6 +106,7 @@ test-suite wai-routing-tests
       , bytestring
       , bytestring-conversion
       , case-insensitive
+      , containers
       , http-types
       , tasty                 >= 0.8
       , tasty-hunit           >= 0.9

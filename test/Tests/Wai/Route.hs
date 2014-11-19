@@ -22,6 +22,7 @@ import Test.Tasty
 import Test.Tasty.HUnit
 import Tests.Wai.Util
 
+import qualified Data.Set             as Set
 import qualified Data.ByteString.Lazy as Lazy
 
 type ApplicationM m = Request -> (Response -> m ResponseReceived) -> m ResponseReceived
@@ -38,7 +39,10 @@ testSitemap = do
     let routes = prepare sitemap
 
     [7,6,5,4,3,2,1,0] @=? map routeMeta (examine sitemap)
-    ["/a", "/b", "/c", "/d", "/e", "/f", "/g", "/h"] @=? map fst routes
+
+    let ra = Set.fromList ["/a", "/b", "/c", "/d", "/e", "/f", "/g", "/h"]
+    let rb = foldTree (\p a -> path p `Set.insert` a) Set.empty routes
+    ra @=? rb
 
     let handler = route routes
 
@@ -231,7 +235,7 @@ testEndpointH f = do
 
 testMedia :: IO ()
 testMedia = do
-    let [(_, h)] = prepare sitemapMedia
+    let [h] = map value . toList $ prepare sitemapMedia
     expectMedia "application/json;q=0.3, application/x-thrift;q=0.7" "application/x-thrift" h
     expectMedia "application/json;q=0.7, application/x-thrift;q=0.3" "application/json" h
 
@@ -257,7 +261,7 @@ expectMedia h res m = do
 
 testErrorRenderer :: IO ()
 testErrorRenderer = do
-    let [(_, h)] = prepare sitemapErrorRenderer
+    let [h] = map value . toList $ prepare sitemapErrorRenderer
     let rq = defaultRequest { rawPathInfo = "/error" }
     rs <- apply h $ fromReq [] . fromRequest $ rq
     status400               @=? responseStatus rs
