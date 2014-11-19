@@ -29,6 +29,16 @@ module Network.Wai.Routing.Route
     , patch
     , Renderer
     , renderer
+
+      -- * Re-exports
+    , Tree
+    , Tree.toList
+    , Tree.foldTree
+    , Tree.mapTree
+
+    , Tree.Payload
+    , Tree.path
+    , Tree.value
     ) where
 
 import Control.Applicative hiding (Const)
@@ -44,6 +54,7 @@ import Network.HTTP.Types
 import Network.Wai
 import Network.Wai.Predicate
 import Network.Wai.Predicate.Request
+import Network.Wai.Route.Tree (Tree)
 import Network.Wai.Routing.Request
 
 import qualified Data.ByteString.Char8  as C
@@ -184,11 +195,11 @@ examine (Routes r) = let St rr _ = execState r zero in
 -- | Routes requests to handlers based on predicated route declarations.
 -- Note that @route (prepare ...)@ behaves like a WAI 'Application' generalised to
 -- arbitrary monads.
-route :: Monad m => [(ByteString, App m)] -> Request -> Continue m -> m ResponseReceived
-route rm = let !tr = Tree.fromList rm in \rq k ->
+route :: Monad m => Tree (App m) -> Request -> Continue m -> m ResponseReceived
+route tr rq k =
     case Tree.lookup tr (Tree.segments $ rawPathInfo rq) of
-        Just (f, v) -> f (fromReq v (fromRequest rq)) k
-        Nothing     -> k notFound
+        Just  e -> Tree.value e (fromReq (Tree.captured $ Tree.captures e) (fromRequest rq)) k
+        Nothing -> k notFound
   where
     notFound = responseLBS status404 [] Lazy.empty
 
@@ -212,10 +223,11 @@ continue f a k = f a >>= k
 {-# INLINE continue #-}
 
 -- | Run the 'Routes' monad and return the handlers per path.
-prepare :: Monad m => Routes a m b -> [(ByteString, App m)]
+prepare :: Monad m => Routes a m b -> Tree (App m)
 prepare (Routes rr) =
-    let s = execState rr zero in
-    map (\g -> (_path (L.head g), select (renderfn s) g)) (normalise (routes s))
+    let s = execState rr zero
+        r = normalise (routes s)
+    in Tree.fromList $ map (\g -> (_path (L.head g), select (renderfn s) g)) r
 
 -- | Group routes by path.
 normalise :: [Route a m] -> [[Route a m]]

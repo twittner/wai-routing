@@ -1,3 +1,8 @@
+0.12
+-----------------------------------------------------------------------------
+- Update `wai-route` dependency and change `prepare` and `route` to work on
+  `Tree (App m)` instead of `[(ByteString, App m)]`.
+
 0.11.1
 -----------------------------------------------------------------------------
 - Bugfix release
