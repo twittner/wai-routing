@@ -1,3 +1,7 @@
+0.12.1
+-----------------------------------------------------------------------------
+- Update `bytestring-conversion` upper bound.
+
 0.12
 -----------------------------------------------------------------------------
 - Update `wai-route` dependency and change `prepare` and `route` to work on

@@ -1,5 +1,5 @@
 name:                wai-routing
-version:             0.12
+version:             0.12.1
 synopsis:            Declarative routing for WAI.
 license:             OtherLicense
 license-file:        LICENSE
@@ -79,7 +79,7 @@ library
         attoparsec            >= 0.10  && < 1.0
       , base                  == 4.*
       , bytestring            >= 0.10  && < 1.0
-      , bytestring-conversion == 0.2.*
+      , bytestring-conversion >= 0.2   && < 1.0
       , cookie                == 0.4.*
       , case-insensitive      >= 1.1   && < 2.0
       , http-types            >= 0.8   && < 1.0
