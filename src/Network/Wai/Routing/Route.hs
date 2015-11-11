@@ -56,6 +56,7 @@ import Network.Wai.Predicate
 import Network.Wai.Predicate.Request
 import Network.Wai.Route.Tree (Tree)
 import Network.Wai.Routing.Request
+import Prelude
 
 import qualified Data.ByteString.Char8  as C
 import qualified Data.ByteString.Lazy   as Lazy
